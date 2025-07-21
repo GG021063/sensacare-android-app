@@ -1,0 +1,138 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'kotlin-kapt'
+}
+
+android {
+    namespace 'com.sensacare.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.sensacare.app"
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        
+        // Enable multidex for large app
+        multiDexEnabled true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            debuggable true
+        }
+    }
+    
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    
+    buildFeatures {
+        viewBinding true
+        dataBinding true
+    }
+    
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/notice.txt'
+        exclude 'META-INF/ASL2.0'
+        pickFirst 'META-INF/*'
+    }
+}
+
+dependencies {
+    // AndroidX Core Libraries
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.activity:activity-ktx:1.8.2'
+    implementation 'androidx.fragment:fragment-ktx:1.6.2'
+    
+    // Material Design
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    
+    // Lifecycle Components
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
+    
+    // Navigation Components
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.7.6'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.7.6'
+    
+    // Room Database
+    implementation 'androidx.room:room-runtime:2.6.1'
+    implementation 'androidx.room:room-ktx:2.6.1'
+    kapt 'androidx.room:room-compiler:2.6.1'
+    
+    // Coroutines
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
+    
+    // Charts for health data visualization
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+    
+    // Retrofit for API calls
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
+    
+    // Gson for JSON parsing
+    implementation 'com.google.code.gson:gson:2.10.1'
+    
+    // Image loading
+    implementation 'com.github.bumptech.glide:glide:4.16.0'
+    kapt 'com.github.bumptech.glide:compiler:4.16.0'
+    
+    // Permissions handling
+    implementation 'com.karumi:dexter:6.2.3'
+    
+    // Date/Time handling
+    implementation 'org.threeten:threetenbp:1.6.8'
+    
+    // Multidex support
+    implementation 'androidx.multidex:multidex:2.0.1'
+    
+    // VeepooSDK dependencies - Local AAR files
+    implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
+    
+    // Copy VeepooSDK files from the SDK directory
+    implementation files('../hband-sdk/Android_Ble_SDK-master/android_sdk_source/jar_base/vpbluetooth_1.0.4.jar')
+    implementation files('../hband-sdk/Android_Ble_SDK-master/android_sdk_source/jar_base/libfastdfu-0.5.aar')
+    implementation files('../hband-sdk/Android_Ble_SDK-master/android_sdk_source/jar_base/libdfu-1.5.aar')
+    implementation files('../hband-sdk/Android_Ble_SDK-master/android_sdk_source/jar_base/libcomx-0.5.jar')
+    implementation files('../hband-sdk/Android_Ble_SDK-master/android_sdk_source/jar_base/libble-0.5.aar')
+    implementation files('../hband-sdk/Android_Ble_SDK-master/android_sdk_source/jar_base/gson-2.2.4.jar')
+    
+    implementation files('../hband-sdk/Android_Ble_SDK-master/android_sdk_source/jar_core/vpprotocol-2.3.20.15.aar')
+    implementation files('../hband-sdk/Android_Ble_SDK-master/android_sdk_source/jar_core/vpbluetooth-1.16.aar')
+    implementation files('../hband-sdk/Android_Ble_SDK-master/android_sdk_source/jar_core/jl_rcsp_V0.5.2-release.aar')
+    implementation files('../hband-sdk/Android_Ble_SDK-master/android_sdk_source/jar_core/jl_bt_ota_V1.9.3-release.aar')
+    implementation files('../hband-sdk/Android_Ble_SDK-master/android_sdk_source/jar_core/JL_Watch_V1.10.0-release.aar')
+    implementation files('../hband-sdk/Android_Ble_SDK-master/android_sdk_source/jar_core/BmpConvert_V1.2.1-release.aar')
+    
+    // Testing dependencies
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation 'androidx.test:runner:1.5.2'
+    androidTestImplementation 'androidx.test:rules:1.5.0'
+} 

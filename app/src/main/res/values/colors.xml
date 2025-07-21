@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Colors - Matching IncrediRing -->
+    <color name="primary">#FF6B35</color>
+    <color name="primary_dark">#E55A2B</color>
+    <color name="primary_light">#FF8A65</color>
+    <color name="accent">#4CAF50</color>
+    <color name="accent_dark">#388E3C</color>
+    
+    <!-- Background Colors - Dark Theme -->
+    <color name="background">#1A1A2E</color>
+    <color name="surface">#16213E</color>
+    <color name="card_background">#0F3460</color>
+    
+    <!-- Text Colors -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B0B0B0</color>
+    <color name="text_hint">#808080</color>
+    
+    <!-- Basic Colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="transparent">#00000000</color>
+    
+    <!-- Status Colors -->
+    <color name="success">#4CAF50</color>
+    <color name="warning">#FF9800</color>
+    <color name="error">#F44336</color>
+    <color name="info">#2196F3</color>
+    
+    <!-- IncrediRing Specific Colors -->
+    <color name="incrediness_orange">#FF6B35</color>
+    <color name="sleep_purple">#9C27B0</color>
+    <color name="activity_green">#4CAF50</color>
+    <color name="healthiness_blue">#03DAC6</color>
+    
+    <!-- UI Elements -->
+    <color name="divider">#2A2A2A</color>
+    <color name="ripple">#1F000000</color>
+    <color name="card_overlay">#80000000</color>
+</resources> 

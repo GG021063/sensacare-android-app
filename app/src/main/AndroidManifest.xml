@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- BLE Hardware Feature Requirements -->
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
+    
+    <!-- Legacy Bluetooth Permissions (API < 31) -->
+    <uses-permission android:name="android.permission.BLUETOOTH" 
+                     android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" 
+                     android:maxSdkVersion="30" />
+    
+    <!-- Location Permissions (Required for BLE scanning on API 23-30) -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    
+    <!-- Optional Background Location (for continuous monitoring) -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    
+    <!-- Android 12+ Bluetooth Permissions (API >= 31) -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" 
+                     android:usesPermissionFlags="neverForLocation"
+                     tools:targetApi="s" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+    
+    <!-- Wake Lock for keeping BLE operations running -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    
+    <!-- Foreground Service for reliable BLE connections -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" 
+                     tools:targetApi="34" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    
+    <!-- Internet for optional firmware updates and data syncing -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    
+    <!-- Storage for logs and temporary files -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+                     android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+                     android:maxSdkVersion="28" />
+    
+    <!-- Vibration for notifications -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    
+    <!-- Boot receiver for auto-start -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    
+    <application
+        android:name=".SensaCareApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SensaCare"
+        android:enableOnBackInvokedCallback="true"
+        tools:targetApi="34">
+        
+        <!-- Main Activity -->
+        <activity
+            android:name=".ui.main.MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.SensaCare.SplashScreen">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            
+            <!-- Deep link handling -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="sensacare" />
+            </intent-filter>
+            
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
+        
+        <!-- Device Scanning Activity -->
+        <activity
+            android:name=".ui.device.DeviceScanActivity"
+            android:exported="false"
+            android:label="@string/title_device_scan"
+            android:theme="@style/Theme.SensaCare" />
+        
+        <!-- Device Details Activity -->
+        <activity
+            android:name=".ui.device.DeviceDetailActivity"
+            android:exported="false"
+            android:label="@string/title_device_detail"
+            android:theme="@style/Theme.SensaCare" />
+        
+        <!-- Health Dashboard Activity -->
+        <activity
+            android:name=".ui.health.HealthDashboardActivity"
+            android:exported="false"
+            android:label="@string/title_health_dashboard"
+            android:theme="@style/Theme.SensaCare" />
+        
+        <!-- Settings Activity -->
+        <activity
+            android:name=".ui.settings.SettingsActivity"
+            android:exported="false"
+            android:label="@string/title_settings"
+            android:theme="@style/Theme.SensaCare" />
+        
+        <!-- Bluetooth Service -->
+        <service
+            android:name=".service.BluetoothService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
+        
+        <!-- Health Sync Service -->
+        <service
+            android:name=".service.HealthSyncService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync|connectedDevice" />
+        
+        <!-- Boot Receiver -->
+        <receiver
+            android:name=".receiver.BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+        
+        <!-- WorkManager Initialization -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="com.sensacare.app.initializer.WorkManagerInitializer"
+                android:value="androidx.startup" />
+            <!-- Remove default WorkManager initializer -->
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+        
+        <!-- File Provider for sharing health reports -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+        
+        <!-- Notification Channels -->
+        <meta-data
+            android:name="com.sensacare.app.notification.CHANNELS"
+            android:resource="@xml/notification_channels" />
+        
+        <!-- Adaptive Icon -->
+        <meta-data
+            android:name="android.support.ADAPTIVE_ICON"
+            android:resource="@mipmap/ic_launcher" />
+        
+        <!-- Health Connect Integration (if needed) -->
+        <meta-data
+            android:name="health_permissions"
+            android:resource="@xml/health_permissions" />
+            
+    </application>
+
+</manifest>

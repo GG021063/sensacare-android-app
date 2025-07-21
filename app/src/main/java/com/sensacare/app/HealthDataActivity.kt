@@ -1,0 +1,313 @@
+package com.sensacare.app
+
+import android.os.Bundle
+import android.view.MenuItem
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.charts.BarChart
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.data.BarData
+import com.github.mikephil.charting.data.BarDataSet
+import com.github.mikephil.charting.data.BarEntry
+import com.veepoo.protocol.VPOperateManager
+import com.veepoo.protocol.listener.data.IHeartDataListener
+import com.veepoo.protocol.listener.data.ISportDataListener
+import com.veepoo.protocol.listener.data.ISleepDataListener
+import com.veepoo.protocol.model.datas.HeartData
+import com.veepoo.protocol.model.datas.SportData
+import com.veepoo.protocol.model.datas.SleepData
+import java.util.*
+
+class HealthDataActivity : AppCompatActivity() {
+    
+    private lateinit var vpOperateManager: VPOperateManager
+    private lateinit var chartHeartRate: LineChart
+    private lateinit var chartSteps: BarChart
+    private lateinit var chartSleep: BarChart
+    private lateinit var rvHealthHistory: RecyclerView
+    private lateinit var healthHistoryAdapter: HealthHistoryAdapter
+    
+    private val heartRateData = mutableListOf<Entry>()
+    private val stepsData = mutableListOf<BarEntry>()
+    private val sleepData = mutableListOf<BarEntry>()
+    private val healthHistory = mutableListOf<HealthHistoryItem>()
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_health_data)
+        
+        setupToolbar()
+        initializeViews()
+        initializeVeepooSDK()
+        setupCharts()
+        loadHealthData()
+    }
+    
+    private fun setupToolbar() {
+        supportActionBar?.apply {
+            setDisplayHomeAsUpEnabled(true)
+            title = "Health Data"
+        }
+    }
+    
+    private fun initializeViews() {
+        chartHeartRate = findViewById(R.id.chartHeartRate)
+        chartSteps = findViewById(R.id.chartSteps)
+        chartSleep = findViewById(R.id.chartSleep)
+        rvHealthHistory = findViewById(R.id.rvHealthHistory)
+        
+        rvHealthHistory.layoutManager = LinearLayoutManager(this)
+        healthHistoryAdapter = HealthHistoryAdapter(healthHistory)
+        rvHealthHistory.adapter = healthHistoryAdapter
+    }
+    
+    private fun initializeVeepooSDK() {
+        vpOperateManager = VPOperateManager.getMangerInstance(this)
+        
+        // Set up data listeners
+        vpOperateManager.setHeartDataListener(object : IHeartDataListener {
+            override fun onHeartDataChange(heartData: HeartData) {
+                runOnUiThread {
+                    updateHeartRateChart(heartData)
+                }
+            }
+        })
+        
+        vpOperateManager.setSportDataListener(object : ISportDataListener {
+            override fun onSportDataChange(sportData: SportData) {
+                runOnUiThread {
+                    updateStepsChart(sportData)
+                }
+            }
+        })
+        
+        vpOperateManager.setSleepDataListener(object : ISleepDataListener {
+            override fun onSleepDataChange(sleepData: SleepData) {
+                runOnUiThread {
+                    updateSleepChart(sleepData)
+                }
+            }
+        })
+    }
+    
+    private fun setupCharts() {
+        setupHeartRateChart()
+        setupStepsChart()
+        setupSleepChart()
+    }
+    
+    private fun setupHeartRateChart() {
+        chartHeartRate.apply {
+            description.isEnabled = false
+            setTouchEnabled(true)
+            setDrawGridBackground(false)
+            legend.isEnabled = true
+            
+            xAxis.apply {
+                setDrawGridLines(false)
+                setDrawAxisLine(true)
+            }
+            
+            axisLeft.apply {
+                setDrawGridLines(true)
+                axisMinimum = 40f
+                axisMaximum = 200f
+            }
+            
+            axisRight.isEnabled = false
+        }
+    }
+    
+    private fun setupStepsChart() {
+        chartSteps.apply {
+            description.isEnabled = false
+            setTouchEnabled(true)
+            setDrawGridBackground(false)
+            legend.isEnabled = true
+            
+            xAxis.apply {
+                setDrawGridLines(false)
+                setDrawAxisLine(true)
+            }
+            
+            axisLeft.apply {
+                setDrawGridLines(true)
+                axisMinimum = 0f
+            }
+            
+            axisRight.isEnabled = false
+        }
+    }
+    
+    private fun setupSleepChart() {
+        chartSleep.apply {
+            description.isEnabled = false
+            setTouchEnabled(true)
+            setDrawGridBackground(false)
+            legend.isEnabled = true
+            
+            xAxis.apply {
+                setDrawGridLines(false)
+                setDrawAxisLine(true)
+            }
+            
+            axisLeft.apply {
+                setDrawGridLines(true)
+                axisMinimum = 0f
+                axisMaximum = 12f
+            }
+            
+            axisRight.isEnabled = false
+        }
+    }
+    
+    private fun loadHealthData() {
+        // Request historical data from device
+        vpOperateManager.readHeartData()
+        vpOperateManager.readSportData()
+        vpOperateManager.readSleepData()
+        
+        // Load last 7 days of data
+        loadHistoricalData()
+    }
+    
+    private fun loadHistoricalData() {
+        // This would load data from local database or device
+        // For now, we'll create sample data
+        createSampleData()
+    }
+    
+    private fun createSampleData() {
+        // Sample heart rate data (last 24 hours)
+        for (i in 0..23) {
+            heartRateData.add(Entry(i.toFloat(), (60 + Math.random() * 40).toFloat()))
+        }
+        
+        // Sample steps data (last 7 days)
+        for (i in 0..6) {
+            stepsData.add(BarEntry(i.toFloat(), (5000 + Math.random() * 5000).toFloat()))
+        }
+        
+        // Sample sleep data (last 7 days)
+        for (i in 0..6) {
+            sleepData.add(BarEntry(i.toFloat(), (6 + Math.random() * 4).toFloat()))
+        }
+        
+        // Create sample health history
+        createSampleHealthHistory()
+        
+        updateCharts()
+    }
+    
+    private fun createSampleHealthHistory() {
+        val calendar = Calendar.getInstance()
+        val types = listOf("Heart Rate", "Steps", "Sleep", "Blood Pressure", "Oxygen")
+        val statuses = listOf("Excellent", "Good", "Fair", "Poor")
+        
+        for (i in 0..9) {
+            calendar.add(Calendar.HOUR, -i * 2)
+            val type = types[i % types.size]
+            val value = when (type) {
+                "Heart Rate" -> "${(60 + Math.random() * 40).toInt()}"
+                "Steps" -> "${(1000 + Math.random() * 8000).toInt()}"
+                "Sleep" -> "${(6 + Math.random() * 4).toInt()}"
+                "Blood Pressure" -> "${(110 + Math.random() * 20).toInt()}/${(70 + Math.random() * 15).toInt()}"
+                else -> "${(95 + Math.random() * 5).toInt()}"
+            }
+            val unit = when (type) {
+                "Heart Rate" -> "bpm"
+                "Steps" -> "steps"
+                "Sleep" -> "hours"
+                "Blood Pressure" -> "mmHg"
+                else -> "%"
+            }
+            val status = statuses[i % statuses.size]
+            
+            healthHistory.add(HealthHistoryItem(calendar.time, type, value, unit, status))
+        }
+        
+        healthHistoryAdapter.notifyDataSetChanged()
+    }
+    
+    private fun updateHeartRateChart(heartData: HeartData) {
+        // Add new heart rate data point
+        val currentTime = System.currentTimeMillis() / 1000f
+        heartRateData.add(Entry(currentTime, heartData.heartRate.toFloat()))
+        
+        // Keep only last 24 hours of data
+        if (heartRateData.size > 24) {
+            heartRateData.removeAt(0)
+        }
+        
+        updateCharts()
+    }
+    
+    private fun updateStepsChart(sportData: SportData) {
+        // Update today's steps
+        if (stepsData.isNotEmpty()) {
+            stepsData[stepsData.size - 1] = BarEntry((stepsData.size - 1).toFloat(), sportData.steps.toFloat())
+        }
+        
+        updateCharts()
+    }
+    
+    private fun updateSleepChart(sleepData: SleepData) {
+        // Update last night's sleep
+        if (this.sleepData.isNotEmpty()) {
+            this.sleepData[this.sleepData.size - 1] = BarEntry((this.sleepData.size - 1).toFloat(), sleepData.sleepHours.toFloat())
+        }
+        
+        updateCharts()
+    }
+    
+    private fun updateCharts() {
+        // Update heart rate chart
+        val heartRateDataSet = LineDataSet(heartRateData, "Heart Rate (BPM)").apply {
+            color = resources.getColor(R.color.error, theme)
+            setCircleColor(resources.getColor(R.color.error, theme))
+            lineWidth = 2f
+            circleRadius = 4f
+            setDrawValues(false)
+        }
+        
+        chartHeartRate.data = LineData(heartRateDataSet)
+        chartHeartRate.invalidate()
+        
+        // Update steps chart
+        val stepsDataSet = BarDataSet(stepsData, "Steps").apply {
+            color = resources.getColor(R.color.accent, theme)
+            setDrawValues(true)
+        }
+        
+        chartSteps.data = BarData(stepsDataSet)
+        chartSteps.invalidate()
+        
+        // Update sleep chart
+        val sleepDataSet = BarDataSet(sleepData, "Sleep Hours").apply {
+            color = resources.getColor(R.color.info, theme)
+            setDrawValues(true)
+        }
+        
+        chartSleep.data = BarData(sleepDataSet)
+        chartSleep.invalidate()
+    }
+    
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                onBackPressed()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        loadHealthData()
+    }
+} 
