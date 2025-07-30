@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Main Bluetooth Symbol -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M17,7l-5,5 5,5 -6,6V1l6,6zM12,6.83V3.83l-2.83,2.83L12,6.83zM12,17.17v3l-2.83,-2.83 2.83,-0.17z" />
+
+    <!-- Diagonal slash to indicate disabled -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round"
+        android:pathData="M4,4L20,20" />
+
+    <!-- Disabled indicator circle -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M8,12m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0" />
+</vector>

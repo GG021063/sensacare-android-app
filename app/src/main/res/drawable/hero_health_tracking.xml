@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="400dp"
+    android:viewportWidth="360"
+    android:viewportHeight="400">
+
+    <!-- Background gradient -->
+    <path
+        android:fillColor="#F5F3FF"
+        android:pathData="M0,0h360v400h-360z" />
+
+    <!-- Person silhouette -->
+    <path
+        android:fillColor="#1F2937"
+        android:pathData="M180,80 C200,80 215,95 215,115 C215,135 200,150 180,150 C160,150 145,135 145,115 C145,95 160,80 180,80 Z" />
+    
+    <!-- Body -->
+    <path
+        android:fillColor="#1F2937"
+        android:pathData="M140,160 C140,160 130,230 130,280 C130,310 150,330 180,330 C210,330 230,310 230,280 C230,230 220,160 220,160 Z" />
+    
+    <!-- Left arm -->
+    <path
+        android:fillColor="#1F2937"
+        android:pathData="M140,170 C140,170 110,190 100,240 C95,265 100,280 110,290 C115,295 125,290 130,280 C135,270 140,250 145,230 C150,210 140,170 140,170 Z" />
+    
+    <!-- Right arm -->
+    <path
+        android:fillColor="#1F2937"
+        android:pathData="M220,170 C220,170 250,190 260,240 C265,265 260,280 250,290 C245,295 235,290 230,280 C225,270 220,250 215,230 C210,210 220,170 220,170 Z" />
+
+    <!-- Smartwatch on left wrist -->
+    <path
+        android:fillColor="#8B5CF6"
+        android:pathData="M110,270 C110,270 105,275 105,280 C105,285 110,290 115,290 C120,290 125,285 125,280 C125,275 120,270 115,270 Z" />
+    
+    <!-- Smartwatch band -->
+    <path
+        android:fillColor="#A78BFA"
+        android:pathData="M110,270 L120,270 L120,265 L110,265 Z" />
+    
+    <path
+        android:fillColor="#A78BFA"
+        android:pathData="M110,290 L120,290 L120,295 L110,295 Z" />
+
+    <!-- Heart rate line on watch -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1"
+        android:pathData="M110,280 L112,280 L113,275 L115,285 L117,275 L120,280" />
+
+    <!-- Fitness ring on right wrist -->
+    <path
+        android:fillColor="#8B5CF6"
+        android:pathData="M250,270 C250,270 245,275 245,280 C245,285 250,290 255,290 C260,290 265,285 265,280 C265,275 260,270 255,270 Z" />
+
+    <!-- Health data visualization elements -->
+    <!-- Heart rate indicator -->
+    <path
+        android:strokeColor="#8B5CF6"
+        android:strokeWidth="2"
+        android:pathData="M160,100 L165,95 L170,100 L175,90 L180,100 L185,90 L190,100 L195,95 L200,100" />
+    
+    <!-- Circular progress indicators around person -->
+    <path
+        android:strokeColor="#A78BFA"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M180,50 A80,80 0 0,1 260,115"
+        android:strokeAlpha="0.6" />
+    
+    <path
+        android:strokeColor="#8B5CF6"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M100,115 A80,80 0 0,1 180,50"
+        android:strokeAlpha="0.6" />
+    
+    <!-- Activity dots -->
+    <path
+        android:fillColor="#8B5CF6"
+        android:pathData="M100,200 C103,200 105,202 105,205 C105,208 103,210 100,210 C97,210 95,208 95,205 C95,202 97,200 100,200 Z" />
+    
+    <path
+        android:fillColor="#A78BFA"
+        android:pathData="M260,200 C263,200 265,202 265,205 C265,208 263,210 260,210 C257,210 255,208 255,205 C255,202 257,200 260,200 Z" />
+    
+    <path
+        android:fillColor="#C4B5FD"
+        android:pathData="M180,40 C183,40 185,42 185,45 C185,48 183,50 180,50 C177,50 175,48 175,45 C175,42 177,40 180,40 Z" />
+</vector>

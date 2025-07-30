@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    
+    <!-- Fill color - switched to Sensacare primary blue -->
+    <solid android:color="@color/sensacare_blue" />
+    
+    <!-- Optional stroke for better definition -->
+    <stroke
+        android:width="1dp"
+        android:color="@color/sensacare_primary_light" />
+    
+    <!-- Size definition - though this is typically controlled by the layout -->
+    <size
+        android:width="60dp"
+        android:height="60dp" />
+        
+</shape>

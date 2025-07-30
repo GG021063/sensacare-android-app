@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    
+    <!-- Background circle -->
+    <path
+        android:fillColor="#E6F5FF"
+        android:pathData="M24,24m-22,0a22,22 0,1 1,44 0a22,22 0,1 1,-44 0" />
+    
+    <!-- Heart shape -->
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M24,38c-0.55,0 -1.1,-0.2 -1.5,-0.6l-15.3,-14.55c-5.85,-5.6 -5.85,-14.7 0,-20.3 2.8,-2.7 6.5,-4.2 10.45,-4.2 3.95,0 7.65,1.5 10.45,4.2 2.8,-2.7 6.5,-4.2 10.45,-4.2 3.95,0 7.65,1.5 10.45,4.2 5.85,5.6 5.85,14.7 0,20.3l-15.3,14.55c-0.4,0.4 -0.95,0.6 -1.5,0.6h-0.05L24,38z" />
+    
+    <!-- Medical cross -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,16L24,32"
+        android:strokeColor="#FFFFFF" 
+        android:strokeWidth="3"
+        android:strokeLineCap="round" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M16,24L32,24"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3" 
+        android:strokeLineCap="round" />
+    
+    <!-- Pulse line -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M10,28h5l3,-8l5,16l4,-10l2,2h9" 
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

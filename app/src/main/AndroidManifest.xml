@@ -1,0 +1,115 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.sensacare.app">
+
+    <!-- Bluetooth permissions -->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    
+    <!-- Internet permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    
+    <!-- Storage permissions -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/sensacare_logo_yellow"
+        android:label="@string/app_name"
+        android:roundIcon="@drawable/sensacare_logo_yellow"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SensaCare">
+
+        <!-- ────────────────────────────────────────────── -->
+        <!--  ENTRY FLOW ACTIVITIES                       -->
+        <!--  1) WelcomeActivity  →  2) Login / Register   -->
+        <!--  → 3) HomeActivity → Device / Health screens -->
+        <!-- ────────────────────────────────────────────── -->
+
+        <!-- Launcher / Welcome screen -->
+        <activity
+            android:name=".WelcomeActivity"
+            android:exported="true"
+            android:label="Welcome"
+            android:theme="@style/Theme.SensaCare">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Login & Registration -->
+        <activity
+            android:name=".LoginActivity"
+            android:label="Login"
+            android:theme="@style/Theme.SensaCare" />
+
+        <activity
+            android:name=".RegisterActivity"
+            android:label="Register"
+            android:theme="@style/Theme.SensaCare" />
+
+        <!-- Home hub after authentication -->
+        <activity
+            android:name=".HomeActivity"
+            android:label="Home"
+            android:theme="@style/Theme.SensaCare" />
+
+        <!-- MainActivity remains but is no longer the launcher -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.SensaCare" />
+
+        <activity android:name=".DeviceConnectionActivity" />
+        <activity android:name=".DashboardActivity" />
+        <activity android:name=".HealthDataActivity" />
+        <activity android:name=".SettingsActivity" />
+        <activity 
+            android:name=".HealthChartsActivity"
+            android:label="Health Charts"
+            android:theme="@style/Theme.SensaCare" />
+            
+        <!-- Core Health Activities -->
+        <activity 
+            android:name=".HeartRateActivity"
+            android:label="Heart Rate"
+            android:theme="@style/Theme.SensaCare" />
+            
+        <activity 
+            android:name=".SleepActivity"
+            android:label="Sleep"
+            android:theme="@style/Theme.SensaCare" />
+            
+        <activity 
+            android:name=".BloodPressureActivity"
+            android:label="Blood Pressure"
+            android:theme="@style/Theme.SensaCare" />
+
+        <!-- Steps / Activity Tracking -->
+        <activity 
+            android:name=".StepsActivity"
+            android:label="Steps"
+            android:theme="@style/Theme.SensaCare" />
+
+        <!-- Blood Oxygen / SpO2 Monitoring -->
+        <activity 
+            android:name=".BloodOxygenActivity"
+            android:label="Blood Oxygen"
+            android:theme="@style/Theme.SensaCare" />
+
+        <!-- Stress Monitoring -->
+        <activity 
+            android:name=".StressActivity"
+            android:label="Stress"
+            android:theme="@style/Theme.SensaCare" />
+
+    </application>
+
+</manifest>

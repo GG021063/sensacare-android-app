@@ -1,0 +1,1820 @@
+package com.sensacare.app
+
+import android.content.Intent
+import android.graphics.Color
+import android.net.Uri
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.MenuItem
+import android.view.View
+import android.widget.Button
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.ProgressBar
+import android.widget.TextView
+import android.widget.Toast
+import android.widget.ToggleButton
+import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import com.github.mikephil.charting.charts.CombinedChart
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.components.YAxis
+import com.github.mikephil.charting.data.BarData
+import com.github.mikephil.charting.data.BarDataSet
+import com.github.mikephil.charting.data.BarEntry
+import com.github.mikephil.charting.data.CombinedData
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.formatter.ValueFormatter
+import com.sensacare.app.utils.PreferenceManager
+import java.io.File
+import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+import java.util.Random
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
+
+/**
+ * HealthReportActivity - Comprehensive health report dashboard
+ *
+ * Features:
+ * - Daily and weekly view toggle
+ * - Comprehensive health score dashboard
+ * - All health metrics in one view (heart rate, sleep, steps, stress, etc.)
+ * - Trends and insights across all metrics
+ * - Health recommendations based on combined data
+ * - Export functionality for sharing with healthcare providers
+ * - Visual health status indicators
+ * - Comparison with previous periods
+ * - Detailed metric cards with quick navigation to individual pages
+ * - Holistic health assessment with actionable insights
+ */
+class HealthReportActivity : AppCompatActivity() {
+
+    // UI Components
+    private lateinit var toggleTimeframe: ToggleButton
+    private lateinit var chartCombined: CombinedChart
+    private lateinit var tvHealthScore: TextView
+    private lateinit var tvHealthStatus: TextView
+    private lateinit var progressHealthScore: ProgressBar
+    private lateinit var tvComparisonValue: TextView
+    private lateinit var ivComparisonTrend: ImageView
+    private lateinit var tvPeriodLabel: TextView
+    
+    // Metric cards
+    private lateinit var cardHeartRate: CardView
+    private lateinit var cardSleep: CardView
+    private lateinit var cardSteps: CardView
+    private lateinit var cardStress: CardView
+    private lateinit var cardHRV: CardView
+    private lateinit var cardTemperature: CardView
+    private lateinit var cardBloodOxygen: CardView
+    private lateinit var cardBloodPressure: CardView
+    private lateinit var cardRespiratoryRate: CardView
+    
+    // Metric values
+    private lateinit var tvHeartRateValue: TextView
+    private lateinit var tvSleepValue: TextView
+    private lateinit var tvStepsValue: TextView
+    private lateinit var tvStressValue: TextView
+    private lateinit var tvHRVValue: TextView
+    private lateinit var tvTemperatureValue: TextView
+    private lateinit var tvBloodOxygenValue: TextView
+    private lateinit var tvBloodPressureValue: TextView
+    private lateinit var tvRespiratoryRateValue: TextView
+    
+    // Metric status indicators
+    private lateinit var ivHeartRateStatus: ImageView
+    private lateinit var ivSleepStatus: ImageView
+    private lateinit var ivStepsStatus: ImageView
+    private lateinit var ivStressStatus: ImageView
+    private lateinit var ivHRVStatus: ImageView
+    private lateinit var ivTemperatureStatus: ImageView
+    private lateinit var ivBloodOxygenStatus: ImageView
+    private lateinit var ivBloodPressureStatus: ImageView
+    private lateinit var ivRespiratoryRateStatus: ImageView
+    
+    // Insights and recommendations
+    private lateinit var tvInsightTitle: TextView
+    private lateinit var tvInsightContent: TextView
+    private lateinit var tvRecommendationTitle: TextView
+    private lateinit var tvRecommendationContent: TextView
+    
+    // Action buttons
+    private lateinit var btnExport: Button
+    private lateinit var btnShare: ImageButton
+    private lateinit var btnRefresh: Button
+    
+    // Loading indicator
+    private lateinit var progressLoading: ProgressBar
+    
+    // Containers
+    private lateinit var containerDaily: LinearLayout
+    private lateinit var containerWeekly: LinearLayout
+    
+    // Data
+    private var isWeeklyView = false
+    private var healthScore = 0
+    private var previousHealthScore = 0
+    private var metricData = HashMap<String, MetricData>()
+    
+    // Preferences
+    private lateinit var preferenceManager: PreferenceManager
+    
+    // Constants
+    companion object {
+        private const val TAG = "HealthReportActivity"
+        
+        // Health score thresholds
+        const val HEALTH_EXCELLENT = 85
+        const val HEALTH_GOOD = 70
+        const val HEALTH_MODERATE = 50
+        const val HEALTH_POOR = 30
+        
+        // Metric keys
+        const val METRIC_HEART_RATE = "heart_rate"
+        const val METRIC_SLEEP = "sleep"
+        const val METRIC_STEPS = "steps"
+        const val METRIC_STRESS = "stress"
+        const val METRIC_HRV = "hrv"
+        const val METRIC_TEMPERATURE = "temperature"
+        const val METRIC_BLOOD_OXYGEN = "blood_oxygen"
+        const val METRIC_BLOOD_PRESSURE = "blood_pressure"
+        const val METRIC_RESPIRATORY_RATE = "respiratory_rate"
+        
+        // Refresh interval
+        private const val REFRESH_INTERVAL = 60000L // 1 minute
+    }
+    
+    // Handler for periodic updates
+    private val handler = Handler(Looper.getMainLooper())
+    private val updateRunnable = object : Runnable {
+        override fun run() {
+            refreshData()
+            handler.postDelayed(this, REFRESH_INTERVAL)
+        }
+    }
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_health_report)
+        
+        try {
+            // Set up action bar
+            supportActionBar?.apply {
+                title = "Health Report"
+                setDisplayHomeAsUpEnabled(true)
+            }
+            
+            // Initialize preferences
+            preferenceManager = PreferenceManager(this)
+            
+            // Initialize UI components
+            initializeViews()
+            
+            // Set up timeframe toggle
+            setupTimeframeToggle()
+            
+            // Set up chart
+            setupChart()
+            
+            // Set up metric cards
+            setupMetricCards()
+            
+            // Set up action buttons
+            setupActionButtons()
+            
+            // Initial data load
+            loadInitialData()
+            
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error initializing: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        // Start periodic updates
+        handler.postDelayed(updateRunnable, REFRESH_INTERVAL)
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        // Stop periodic updates
+        handler.removeCallbacks(updateRunnable)
+    }
+    
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                onBackPressed()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+    
+    /**
+     * Initialize all UI components
+     */
+    private fun initializeViews() {
+        // Toggle and chart
+        toggleTimeframe = findViewById(R.id.toggleTimeframe)
+        chartCombined = findViewById(R.id.chartCombined)
+        tvPeriodLabel = findViewById(R.id.tvPeriodLabel)
+        
+        // Health score
+        tvHealthScore = findViewById(R.id.tvHealthScore)
+        tvHealthStatus = findViewById(R.id.tvHealthStatus)
+        progressHealthScore = findViewById(R.id.progressHealthScore)
+        tvComparisonValue = findViewById(R.id.tvComparisonValue)
+        ivComparisonTrend = findViewById(R.id.ivComparisonTrend)
+        
+        // Containers
+        containerDaily = findViewById(R.id.containerDaily)
+        containerWeekly = findViewById(R.id.containerWeekly)
+        
+        // Metric cards
+        cardHeartRate = findViewById(R.id.cardHeartRate)
+        cardSleep = findViewById(R.id.cardSleep)
+        cardSteps = findViewById(R.id.cardSteps)
+        cardStress = findViewById(R.id.cardStress)
+        cardHRV = findViewById(R.id.cardHRV)
+        cardTemperature = findViewById(R.id.cardTemperature)
+        cardBloodOxygen = findViewById(R.id.cardBloodOxygen)
+        cardBloodPressure = findViewById(R.id.cardBloodPressure)
+        cardRespiratoryRate = findViewById(R.id.cardRespiratoryRate)
+        
+        // Metric values
+        tvHeartRateValue = findViewById(R.id.tvHeartRateValue)
+        tvSleepValue = findViewById(R.id.tvSleepValue)
+        tvStepsValue = findViewById(R.id.tvStepsValue)
+        tvStressValue = findViewById(R.id.tvStressValue)
+        tvHRVValue = findViewById(R.id.tvHRVValue)
+        tvTemperatureValue = findViewById(R.id.tvTemperatureValue)
+        tvBloodOxygenValue = findViewById(R.id.tvBloodOxygenValue)
+        tvBloodPressureValue = findViewById(R.id.tvBloodPressureValue)
+        tvRespiratoryRateValue = findViewById(R.id.tvRespiratoryRateValue)
+        
+        // Metric status indicators
+        ivHeartRateStatus = findViewById(R.id.ivHeartRateStatus)
+        ivSleepStatus = findViewById(R.id.ivSleepStatus)
+        ivStepsStatus = findViewById(R.id.ivStepsStatus)
+        ivStressStatus = findViewById(R.id.ivStressStatus)
+        ivHRVStatus = findViewById(R.id.ivHRVStatus)
+        ivTemperatureStatus = findViewById(R.id.ivTemperatureStatus)
+        ivBloodOxygenStatus = findViewById(R.id.ivBloodOxygenStatus)
+        ivBloodPressureStatus = findViewById(R.id.ivBloodPressureStatus)
+        ivRespiratoryRateStatus = findViewById(R.id.ivRespiratoryRateStatus)
+        
+        // Insights and recommendations
+        tvInsightTitle = findViewById(R.id.tvInsightTitle)
+        tvInsightContent = findViewById(R.id.tvInsightContent)
+        tvRecommendationTitle = findViewById(R.id.tvRecommendationTitle)
+        tvRecommendationContent = findViewById(R.id.tvRecommendationContent)
+        
+        // Action buttons
+        btnExport = findViewById(R.id.btnExport)
+        btnShare = findViewById(R.id.btnShare)
+        btnRefresh = findViewById(R.id.btnRefresh)
+        
+        // Loading indicator
+        progressLoading = findViewById(R.id.progressLoading)
+    }
+    
+    /**
+     * Set up timeframe toggle (daily/weekly)
+     */
+    private fun setupTimeframeToggle() {
+        toggleTimeframe.setOnCheckedChangeListener { _, isChecked ->
+            isWeeklyView = isChecked
+            
+            // Update period label
+            updatePeriodLabel()
+            
+            // Update visibility of containers
+            containerDaily.visibility = if (isWeeklyView) View.GONE else View.VISIBLE
+            containerWeekly.visibility = if (isWeeklyView) View.VISIBLE else View.GONE
+            
+            // Update chart
+            updateChart()
+            
+            // Update metrics display
+            updateMetricsDisplay()
+            
+            // Update insights and recommendations
+            updateInsights()
+            updateRecommendations()
+        }
+    }
+    
+    /**
+     * Update period label based on current view
+     */
+    private fun updatePeriodLabel() {
+        val calendar = Calendar.getInstance()
+        val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+        
+        if (isWeeklyView) {
+            // Set to start of week
+            calendar.set(Calendar.DAY_OF_WEEK, calendar.firstDayOfWeek)
+            val weekStart = dateFormat.format(calendar.time)
+            
+            // Set to end of week
+            calendar.add(Calendar.DAY_OF_WEEK, 6)
+            val weekEnd = dateFormat.format(calendar.time)
+            
+            tvPeriodLabel.text = "Week: $weekStart - $weekEnd"
+        } else {
+            // Today's date
+            val today = dateFormat.format(calendar.time)
+            tvPeriodLabel.text = "Today: $today"
+        }
+    }
+    
+    /**
+     * Configure the combined chart
+     */
+    private fun setupChart() {
+        try {
+            with(chartCombined) {
+                description.isEnabled = false
+                setTouchEnabled(true)
+                isDragEnabled = true
+                setScaleEnabled(true)
+                setPinchZoom(true)
+                setDrawGridBackground(false)
+                
+                // X-axis setup
+                xAxis.apply {
+                    position = XAxis.XAxisPosition.BOTTOM
+                    textColor = ContextCompat.getColor(this@HealthReportActivity, R.color.text_primary)
+                    setDrawGridLines(false)
+                    valueFormatter = object : ValueFormatter() {
+                        override fun getFormattedValue(value: Float): String {
+                            return if (isWeeklyView) {
+                                // Day of week
+                                val calendar = Calendar.getInstance()
+                                calendar.set(Calendar.DAY_OF_WEEK, value.toInt())
+                                SimpleDateFormat("EEE", Locale.getDefault()).format(calendar.time)
+                            } else {
+                                // Hour of day
+                                "${value.toInt()}:00"
+                            }
+                        }
+                    }
+                }
+                
+                // Left Y-axis setup (primary)
+                axisLeft.apply {
+                    textColor = ContextCompat.getColor(this@HealthReportActivity, R.color.text_primary)
+                    setDrawGridLines(true)
+                    axisMinimum = 0f
+                }
+                
+                // Right Y-axis setup (secondary)
+                axisRight.apply {
+                    textColor = ContextCompat.getColor(this@HealthReportActivity, R.color.text_primary)
+                    setDrawGridLines(false)
+                    axisMinimum = 0f
+                }
+                
+                // Legend setup
+                legend.apply {
+                    textColor = ContextCompat.getColor(this@HealthReportActivity, R.color.text_primary)
+                    verticalAlignment = com.github.mikephil.charting.components.Legend.LegendVerticalAlignment.BOTTOM
+                    horizontalAlignment = com.github.mikephil.charting.components.Legend.LegendHorizontalAlignment.CENTER
+                    orientation = com.github.mikephil.charting.components.Legend.LegendOrientation.HORIZONTAL
+                    setDrawInside(false)
+                }
+                
+                // Animate chart
+                animateX(1000)
+            }
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error setting up chart: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * Set up metric cards with click listeners
+     */
+    private fun setupMetricCards() {
+        // Heart Rate
+        cardHeartRate.setOnClickListener {
+            startActivity(Intent(this, HeartRateActivity::class.java))
+        }
+        
+        // Sleep
+        cardSleep.setOnClickListener {
+            startActivity(Intent(this, SleepActivity::class.java))
+        }
+        
+        // Steps
+        cardSteps.setOnClickListener {
+            startActivity(Intent(this, StepsActivity::class.java))
+        }
+        
+        // Stress
+        cardStress.setOnClickListener {
+            startActivity(Intent(this, StressActivity::class.java))
+        }
+        
+        // HRV
+        cardHRV.setOnClickListener {
+            startActivity(Intent(this, HRVActivity::class.java))
+        }
+        
+        // Temperature
+        cardTemperature.setOnClickListener {
+            startActivity(Intent(this, TemperatureActivity::class.java))
+        }
+        
+        // Blood Oxygen
+        cardBloodOxygen.setOnClickListener {
+            startActivity(Intent(this, BloodOxygenActivity::class.java))
+        }
+        
+        // Blood Pressure
+        cardBloodPressure.setOnClickListener {
+            startActivity(Intent(this, BloodPressureActivity::class.java))
+        }
+        
+        // Respiratory Rate
+        cardRespiratoryRate.setOnClickListener {
+            startActivity(Intent(this, RespiratoryRateActivity::class.java))
+        }
+    }
+    
+    /**
+     * Set up action buttons
+     */
+    private fun setupActionButtons() {
+        // Export button
+        btnExport.setOnClickListener {
+            exportHealthReport()
+        }
+        
+        // Share button
+        btnShare.setOnClickListener {
+            shareHealthReport()
+        }
+        
+        // Refresh button
+        btnRefresh.setOnClickListener {
+            showLoading(true)
+            refreshData()
+        }
+    }
+    
+    /**
+     * Load initial health data
+     */
+    private fun loadInitialData() {
+        showLoading(true)
+        
+        // Simulate loading delay
+        Handler(Looper.getMainLooper()).postDelayed({
+            try {
+                // Initialize metric data
+                initializeMetricData()
+                
+                // Calculate health score
+                calculateHealthScore()
+                
+                // Update period label
+                updatePeriodLabel()
+                
+                // Update chart
+                updateChart()
+                
+                // Update health score display
+                updateHealthScoreDisplay()
+                
+                // Update metrics display
+                updateMetricsDisplay()
+                
+                // Update insights and recommendations
+                updateInsights()
+                updateRecommendations()
+                
+                showLoading(false)
+            } catch (e: Exception) {
+                Toast.makeText(this, "Error loading data: ${e.message}", Toast.LENGTH_SHORT).show()
+                showLoading(false)
+            }
+        }, 1000)
+    }
+    
+    /**
+     * Initialize metric data with simulated values
+     * In a real app, this would fetch data from various sources
+     */
+    private fun initializeMetricData() {
+        // Heart Rate (bpm)
+        metricData[METRIC_HEART_RATE] = MetricData(
+            current = 72,
+            min = 62,
+            max = 85,
+            avg = 74.3,
+            normalMin = 60,
+            normalMax = 100,
+            unit = "bpm",
+            dailyData = generateHourlyData(60, 100, 72),
+            weeklyData = generateDailyData(60, 100, 74)
+        )
+        
+        // Sleep (hours)
+        metricData[METRIC_SLEEP] = MetricData(
+            current = 7.2,
+            min = 6.5,
+            max = 8.5,
+            avg = 7.4,
+            normalMin = 7.0,
+            normalMax = 9.0,
+            unit = "hrs",
+            dailyData = listOf(7.2), // Only one value for today
+            weeklyData = generateDailyData(6.0, 9.0, 7.5)
+        )
+        
+        // Steps (count)
+        metricData[METRIC_STEPS] = MetricData(
+            current = 8450,
+            min = 5200,
+            max = 12000,
+            avg = 8900.0,
+            normalMin = 7500.0,
+            normalMax = 10000.0,
+            unit = "steps",
+            dailyData = generateCumulativeHourlyData(10000),
+            weeklyData = generateDailyData(5000.0, 12000.0, 8500.0)
+        )
+        
+        // Stress (0-10 scale)
+        metricData[METRIC_STRESS] = MetricData(
+            current = 4,
+            min = 2,
+            max = 7,
+            avg = 4.2,
+            normalMin = 0.0,
+            normalMax = 5.0,
+            unit = "level",
+            dailyData = generateHourlyData(0, 10, 4),
+            weeklyData = generateDailyData(0.0, 10.0, 4.0)
+        )
+        
+        // HRV (ms)
+        metricData[METRIC_HRV] = MetricData(
+            current = 65,
+            min = 45,
+            max = 75,
+            avg = 62.5,
+            normalMin = 50.0,
+            normalMax = 100.0,
+            unit = "ms",
+            dailyData = generateHourlyData(40, 80, 65),
+            weeklyData = generateDailyData(40.0, 80.0, 62.0)
+        )
+        
+        // Temperature (°C)
+        metricData[METRIC_TEMPERATURE] = MetricData(
+            current = 36.7,
+            min = 36.4,
+            max = 37.1,
+            avg = 36.8,
+            normalMin = 36.5,
+            normalMax = 37.5,
+            unit = "°C",
+            dailyData = generateHourlyData(36.4, 37.2, 36.7),
+            weeklyData = generateDailyData(36.4, 37.2, 36.8)
+        )
+        
+        // Blood Oxygen (%)
+        metricData[METRIC_BLOOD_OXYGEN] = MetricData(
+            current = 98,
+            min = 95,
+            max = 99,
+            avg = 97.5,
+            normalMin = 95.0,
+            normalMax = 100.0,
+            unit = "%",
+            dailyData = generateHourlyData(94, 100, 98),
+            weeklyData = generateDailyData(94.0, 100.0, 97.0)
+        )
+        
+        // Blood Pressure (mmHg)
+        metricData[METRIC_BLOOD_PRESSURE] = MetricData(
+            current = 120,
+            min = 110,
+            max = 130,
+            avg = 122.0,
+            normalMin = 90.0,
+            normalMax = 120.0,
+            unit = "mmHg",
+            dailyData = generateHourlyData(110, 130, 120),
+            weeklyData = generateDailyData(110.0, 130.0, 122.0),
+            secondaryValue = 80, // Diastolic
+            secondaryUnit = "mmHg"
+        )
+        
+        // Respiratory Rate (breaths/min)
+        metricData[METRIC_RESPIRATORY_RATE] = MetricData(
+            current = 16,
+            min = 14,
+            max = 18,
+            avg = 15.8,
+            normalMin = 12.0,
+            normalMax = 20.0,
+            unit = "br/min",
+            dailyData = generateHourlyData(12, 20, 16),
+            weeklyData = generateDailyData(12.0, 20.0, 16.0)
+        )
+        
+        // Set previous health score (for comparison)
+        previousHealthScore = if (isWeeklyView) {
+            // Previous week
+            Random().nextInt(30) + 50 // 50-80 range
+        } else {
+            // Yesterday
+            Random().nextInt(20) + 60 // 60-80 range
+        }
+    }
+    
+    /**
+     * Refresh health data
+     */
+    private fun refreshData() {
+        try {
+            // In a real implementation, this would fetch new data from various sources
+            // For now, we'll just update with slightly different values
+            
+            // Update metric data with small variations
+            updateMetricDataWithVariations()
+            
+            // Calculate health score
+            calculateHealthScore()
+            
+            // Update chart
+            updateChart()
+            
+            // Update health score display
+            updateHealthScoreDisplay()
+            
+            // Update metrics display
+            updateMetricsDisplay()
+            
+            // Update insights and recommendations
+            updateInsights()
+            updateRecommendations()
+            
+            showLoading(false)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error refreshing data: ${e.message}", Toast.LENGTH_SHORT).show()
+            showLoading(false)
+        }
+    }
+    
+    /**
+     * Update metric data with small variations
+     * In a real app, this would fetch actual new data
+     */
+    private fun updateMetricDataWithVariations() {
+        for ((key, data) in metricData) {
+            // Add small random variation to current value
+            val variation = when (key) {
+                METRIC_HEART_RATE -> (-3..3).random()
+                METRIC_SLEEP -> ((-5..5).random() / 10.0)
+                METRIC_STEPS -> (-200..200).random()
+                METRIC_STRESS -> (-1..1).random()
+                METRIC_HRV -> (-5..5).random()
+                METRIC_TEMPERATURE -> ((-2..2).random() / 10.0)
+                METRIC_BLOOD_OXYGEN -> (-1..1).random()
+                METRIC_BLOOD_PRESSURE -> (-5..5).random()
+                METRIC_RESPIRATORY_RATE -> (-1..1).random()
+                else -> 0
+            }
+            
+            // Update current value
+            val newCurrent = when (key) {
+                METRIC_HEART_RATE -> max(50, min(120, data.current.toInt() + variation))
+                METRIC_SLEEP -> max(5.0, min(10.0, data.current.toDouble() + variation))
+                METRIC_STEPS -> max(0, data.current.toInt() + variation)
+                METRIC_STRESS -> max(0, min(10, data.current.toInt() + variation))
+                METRIC_HRV -> max(30, min(100, data.current.toInt() + variation))
+                METRIC_TEMPERATURE -> max(35.5, min(38.0, data.current.toDouble() + variation))
+                METRIC_BLOOD_OXYGEN -> max(90, min(100, data.current.toInt() + variation))
+                METRIC_BLOOD_PRESSURE -> max(90, min(150, data.current.toInt() + variation))
+                METRIC_RESPIRATORY_RATE -> max(10, min(24, data.current.toInt() + variation))
+                else -> data.current
+            }
+            
+            // Update data
+            metricData[key] = data.copy(current = newCurrent)
+            
+            // Update secondary value for blood pressure
+            if (key == METRIC_BLOOD_PRESSURE) {
+                val diastolicVariation = (-3..3).random()
+                val newDiastolic = max(60, min(100, (data.secondaryValue ?: 80) + diastolicVariation))
+                metricData[key] = metricData[key]!!.copy(secondaryValue = newDiastolic)
+            }
+        }
+    }
+    
+    /**
+     * Calculate overall health score based on all metrics
+     */
+    private fun calculateHealthScore() {
+        // Weight factors for each metric
+        val weights = mapOf(
+            METRIC_HEART_RATE to 0.15,
+            METRIC_SLEEP to 0.15,
+            METRIC_STEPS to 0.10,
+            METRIC_STRESS to 0.15,
+            METRIC_HRV to 0.10,
+            METRIC_TEMPERATURE to 0.05,
+            METRIC_BLOOD_OXYGEN to 0.10,
+            METRIC_BLOOD_PRESSURE to 0.10,
+            METRIC_RESPIRATORY_RATE to 0.10
+        )
+        
+        var totalScore = 0.0
+        var totalWeight = 0.0
+        
+        // Calculate score for each metric
+        for ((key, data) in metricData) {
+            val weight = weights[key] ?: 0.0
+            if (weight > 0) {
+                val metricScore = calculateMetricScore(key, data)
+                totalScore += metricScore * weight
+                totalWeight += weight
+            }
+        }
+        
+        // Calculate final weighted score
+        healthScore = if (totalWeight > 0) {
+            (totalScore / totalWeight).roundToInt()
+        } else {
+            0
+        }
+        
+        // Ensure score is within 0-100 range
+        healthScore = max(0, min(100, healthScore))
+    }
+    
+    /**
+     * Calculate score for an individual metric (0-100 scale)
+     */
+    private fun calculateMetricScore(key: String, data: MetricData): Double {
+        val current = data.current.toDouble()
+        val normalMin = data.normalMin
+        val normalMax = data.normalMax
+        
+        // Different scoring logic based on metric type
+        return when (key) {
+            METRIC_HEART_RATE -> {
+                // Heart rate: optimal is middle of normal range
+                val optimal = (normalMin + normalMax) / 2
+                val deviation = Math.abs(current - optimal)
+                val maxDeviation = (normalMax - normalMin) / 2
+                100 * (1 - min(1.0, deviation / maxDeviation))
+            }
+            
+            METRIC_SLEEP -> {
+                // Sleep: optimal is at or above normalMin up to normalMax
+                when {
+                    current >= normalMin && current <= normalMax -> 100.0
+                    current < normalMin -> 100 * (current / normalMin)
+                    else -> 100 * (1 - min(1.0, (current - normalMax) / 2))
+                }
+            }
+            
+            METRIC_STEPS -> {
+                // Steps: optimal is at or above normalMax
+                when {
+                    current >= normalMax -> 100.0
+                    current >= normalMin -> 70 + 30 * ((current - normalMin) / (normalMax - normalMin))
+                    else -> 70 * (current / normalMin)
+                }
+            }
+            
+            METRIC_STRESS -> {
+                // Stress: lower is better (0 is optimal)
+                val maxStress = 10.0
+                100 * (1 - min(1.0, current / maxStress))
+            }
+            
+            METRIC_BLOOD_OXYGEN -> {
+                // Blood oxygen: higher is better within normal range
+                when {
+                    current >= 98 -> 100.0
+                    current >= 95 -> 80 + 20 * ((current - 95) / 3)
+                    current >= 90 -> 60 + 20 * ((current - 90) / 5)
+                    else -> 60 * (current / 90)
+                }
+            }
+            
+            METRIC_BLOOD_PRESSURE -> {
+                // Blood pressure: optimal is middle of normal range
+                // Using systolic for simplicity
+                val optimal = (normalMin + normalMax) / 2
+                val deviation = Math.abs(current - optimal)
+                val maxDeviation = (normalMax - normalMin) / 2
+                val systolicScore = 100 * (1 - min(1.0, deviation / maxDeviation))
+                
+                // Factor in diastolic if available
+                val diastolic = data.secondaryValue?.toDouble() ?: 0.0
+                if (diastolic > 0) {
+                    val diastolicOptimal = 80.0
+                    val diastolicDeviation = Math.abs(diastolic - diastolicOptimal)
+                    val diastolicScore = 100 * (1 - min(1.0, diastolicDeviation / 20))
+                    (systolicScore + diastolicScore) / 2
+                } else {
+                    systolicScore
+                }
+            }
+            
+            else -> {
+                // Default scoring for other metrics
+                // Optimal is within normal range
+                when {
+                    current >= normalMin && current <= normalMax -> 100.0
+                    current < normalMin -> {
+                        val minThreshold = normalMin * 0.7 // 70% of normal min
+                        100 * ((current - minThreshold) / (normalMin - minThreshold))
+                    }
+                    else -> {
+                        val maxThreshold = normalMax * 1.3 // 130% of normal max
+                        100 * (1 - min(1.0, (current - normalMax) / (maxThreshold - normalMax)))
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Update the health score display
+     */
+    private fun updateHealthScoreDisplay() {
+        // Update score text
+        tvHealthScore.text = healthScore.toString()
+        
+        // Update progress bar
+        progressHealthScore.progress = healthScore
+        
+        // Update status text and color
+        val (statusText, statusColor) = when {
+            healthScore >= HEALTH_EXCELLENT -> Pair("Excellent", ContextCompat.getColor(this, R.color.status_excellent))
+            healthScore >= HEALTH_GOOD -> Pair("Good", ContextCompat.getColor(this, R.color.status_normal))
+            healthScore >= HEALTH_MODERATE -> Pair("Moderate", ContextCompat.getColor(this, R.color.status_warning))
+            healthScore >= HEALTH_POOR -> Pair("Poor", ContextCompat.getColor(this, R.color.status_alert))
+            else -> Pair("Critical", ContextCompat.getColor(this, R.color.status_critical))
+        }
+        
+        tvHealthStatus.text = statusText
+        tvHealthStatus.setTextColor(statusColor)
+        
+        // Update comparison with previous period
+        val difference = healthScore - previousHealthScore
+        val percentChange = if (previousHealthScore > 0) {
+            (difference * 100 / previousHealthScore.toDouble()).roundToInt()
+        } else {
+            0
+        }
+        
+        val comparisonText = when {
+            difference > 0 -> "+$difference pts ($percentChange%)"
+            difference < 0 -> "$difference pts ($percentChange%)"
+            else -> "No change"
+        }
+        
+        tvComparisonValue.text = comparisonText
+        
+        // Update comparison icon
+        when {
+            difference > 0 -> {
+                ivComparisonTrend.setImageResource(R.drawable.ic_trend_up)
+                tvComparisonValue.setTextColor(ContextCompat.getColor(this, R.color.status_excellent))
+            }
+            difference < 0 -> {
+                ivComparisonTrend.setImageResource(R.drawable.ic_trend_down)
+                tvComparisonValue.setTextColor(ContextCompat.getColor(this, R.color.status_alert))
+            }
+            else -> {
+                ivComparisonTrend.setImageResource(R.drawable.ic_trend_flat)
+                tvComparisonValue.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
+            }
+        }
+    }
+    
+    /**
+     * Update the combined chart with selected metrics
+     */
+    private fun updateChart() {
+        try {
+            // Determine which data to show based on current view
+            val heartRateData = metricData[METRIC_HEART_RATE]
+            val stepsData = metricData[METRIC_STEPS]
+            
+            val heartRateValues = if (isWeeklyView) {
+                heartRateData?.weeklyData ?: listOf()
+            } else {
+                heartRateData?.dailyData ?: listOf()
+            }
+            
+            val stepsValues = if (isWeeklyView) {
+                stepsData?.weeklyData ?: listOf()
+            } else {
+                stepsData?.dailyData ?: listOf()
+            }
+            
+            // Create heart rate line dataset
+            val heartRateEntries = heartRateValues.mapIndexed { index, value ->
+                Entry(index.toFloat() + 1, value.toFloat())
+            }
+            
+            val heartRateDataSet = LineDataSet(heartRateEntries, "Heart Rate")
+            heartRateDataSet.apply {
+                color = ContextCompat.getColor(this@HealthReportActivity, R.color.heart_rate_color)
+                setCircleColor(ContextCompat.getColor(this@HealthReportActivity, R.color.heart_rate_color))
+                lineWidth = 2f
+                circleRadius = 3f
+                setDrawCircleHole(false)
+                valueTextSize = 9f
+                setDrawValues(false)
+                axisDependency = YAxis.AxisDependency.LEFT
+            }
+            
+            // Create steps bar dataset
+            val stepsEntries = stepsValues.mapIndexed { index, value ->
+                BarEntry(index.toFloat() + 1, value.toFloat())
+            }
+            
+            val stepsDataSet = BarDataSet(stepsEntries, "Steps")
+            stepsDataSet.apply {
+                color = ContextCompat.getColor(this@HealthReportActivity, R.color.steps_color)
+                valueTextSize = 9f
+                setDrawValues(false)
+                axisDependency = YAxis.AxisDependency.RIGHT
+            }
+            
+            // Create combined data
+            val combinedData = CombinedData()
+            combinedData.setData(LineData(heartRateDataSet))
+            combinedData.setData(BarData(stepsDataSet))
+            
+            // Set axis ranges
+            chartCombined.axisLeft.apply {
+                axisMinimum = 40f
+                axisMaximum = 120f
+                valueFormatter = object : ValueFormatter() {
+                    override fun getFormattedValue(value: Float): String {
+                        return "${value.toInt()} bpm"
+                    }
+                }
+            }
+            
+            chartCombined.axisRight.apply {
+                axisMinimum = 0f
+                axisMaximum = 15000f
+                valueFormatter = object : ValueFormatter() {
+                    override fun getFormattedValue(value: Float): String {
+                        return "${value.toInt()} steps"
+                    }
+                }
+            }
+            
+            // Set x-axis range
+            val xMax = if (isWeeklyView) 7f else 24f
+            chartCombined.xAxis.apply {
+                axisMinimum = 0.5f
+                axisMaximum = xMax + 0.5f
+            }
+            
+            // Set data and refresh
+            chartCombined.data = combinedData
+            chartCombined.invalidate()
+            
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error updating chart: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * Update all metric displays
+     */
+    private fun updateMetricsDisplay() {
+        // Heart Rate
+        updateMetricDisplay(
+            METRIC_HEART_RATE,
+            tvHeartRateValue,
+            ivHeartRateStatus
+        )
+        
+        // Sleep
+        updateMetricDisplay(
+            METRIC_SLEEP,
+            tvSleepValue,
+            ivSleepStatus
+        )
+        
+        // Steps
+        updateMetricDisplay(
+            METRIC_STEPS,
+            tvStepsValue,
+            ivStepsStatus
+        )
+        
+        // Stress
+        updateMetricDisplay(
+            METRIC_STRESS,
+            tvStressValue,
+            ivStressStatus
+        )
+        
+        // HRV
+        updateMetricDisplay(
+            METRIC_HRV,
+            tvHRVValue,
+            ivHRVStatus
+        )
+        
+        // Temperature
+        updateMetricDisplay(
+            METRIC_TEMPERATURE,
+            tvTemperatureValue,
+            ivTemperatureStatus
+        )
+        
+        // Blood Oxygen
+        updateMetricDisplay(
+            METRIC_BLOOD_OXYGEN,
+            tvBloodOxygenValue,
+            ivBloodOxygenStatus
+        )
+        
+        // Blood Pressure
+        updateMetricDisplay(
+            METRIC_BLOOD_PRESSURE,
+            tvBloodPressureValue,
+            ivBloodPressureStatus
+        )
+        
+        // Respiratory Rate
+        updateMetricDisplay(
+            METRIC_RESPIRATORY_RATE,
+            tvRespiratoryRateValue,
+            ivRespiratoryRateStatus
+        )
+    }
+    
+    /**
+     * Update an individual metric display
+     */
+    private fun updateMetricDisplay(
+        metricKey: String,
+        valueTextView: TextView,
+        statusImageView: ImageView
+    ) {
+        val data = metricData[metricKey] ?: return
+        
+        // Format value text
+        val valueText = when (metricKey) {
+            METRIC_BLOOD_PRESSURE -> {
+                // Special case for blood pressure (systolic/diastolic)
+                "${data.current.toInt()}/${data.secondaryValue ?: 0} ${data.unit}"
+            }
+            METRIC_SLEEP -> {
+                // Format sleep with one decimal place
+                String.format("%.1f %s", data.current, data.unit)
+            }
+            METRIC_TEMPERATURE -> {
+                // Format temperature with one decimal place
+                String.format("%.1f %s", data.current, data.unit)
+            }
+            else -> {
+                // Integer format for other metrics
+                "${data.current.toInt()} ${data.unit}"
+            }
+        }
+        
+        // Set value text
+        valueTextView.text = valueText
+        
+        // Determine status
+        val status = getMetricStatus(metricKey, data)
+        
+        // Set status icon and color
+        when (status) {
+            MetricStatus.EXCELLENT -> {
+                statusImageView.setImageResource(R.drawable.ic_status_excellent)
+                valueTextView.setTextColor(ContextCompat.getColor(this, R.color.status_excellent))
+            }
+            MetricStatus.NORMAL -> {
+                statusImageView.setImageResource(R.drawable.ic_status_normal)
+                valueTextView.setTextColor(ContextCompat.getColor(this, R.color.status_normal))
+            }
+            MetricStatus.WARNING -> {
+                statusImageView.setImageResource(R.drawable.ic_status_warning)
+                valueTextView.setTextColor(ContextCompat.getColor(this, R.color.status_warning))
+            }
+            MetricStatus.ALERT -> {
+                statusImageView.setImageResource(R.drawable.ic_status_alert)
+                valueTextView.setTextColor(ContextCompat.getColor(this, R.color.status_alert))
+            }
+        }
+    }
+    
+    /**
+     * Determine status for a metric
+     */
+    private fun getMetricStatus(metricKey: String, data: MetricData): MetricStatus {
+        val current = data.current.toDouble()
+        val normalMin = data.normalMin
+        val normalMax = data.normalMax
+        
+        // Different logic based on metric type
+        return when (metricKey) {
+            METRIC_HEART_RATE -> {
+                when {
+                    current >= normalMin && current <= normalMax -> {
+                        // Within normal range
+                        val optimal = (normalMin + normalMax) / 2
+                        val deviation = Math.abs(current - optimal)
+                        val maxDeviation = (normalMax - normalMin) / 2
+                        if (deviation < maxDeviation * 0.3) {
+                            MetricStatus.EXCELLENT
+                        } else {
+                            MetricStatus.NORMAL
+                        }
+                    }
+                    current < normalMin -> {
+                        // Below normal
+                        if (current > normalMin * 0.9) {
+                            MetricStatus.WARNING
+                        } else {
+                            MetricStatus.ALERT
+                        }
+                    }
+                    else -> {
+                        // Above normal
+                        if (current < normalMax * 1.1) {
+                            MetricStatus.WARNING
+                        } else {
+                            MetricStatus.ALERT
+                        }
+                    }
+                }
+            }
+            
+            METRIC_SLEEP -> {
+                when {
+                    current >= 7.5 && current <= 8.5 -> MetricStatus.EXCELLENT
+                    current >= normalMin && current <= normalMax -> MetricStatus.NORMAL
+                    current >= normalMin * 0.9 || current <= normalMax * 1.1 -> MetricStatus.WARNING
+                    else -> MetricStatus.ALERT
+                }
+            }
+            
+            METRIC_STEPS -> {
+                when {
+                    current >= normalMax * 1.2 -> MetricStatus.EXCELLENT
+                    current >= normalMax -> MetricStatus.EXCELLENT
+                    current >= normalMin -> MetricStatus.NORMAL
+                    current >= normalMin * 0.7 -> MetricStatus.WARNING
+                    else -> MetricStatus.ALERT
+                }
+            }
+            
+            METRIC_STRESS -> {
+                when {
+                    current <= 3 -> MetricStatus.EXCELLENT
+                    current <= 5 -> MetricStatus.NORMAL
+                    current <= 7 -> MetricStatus.WARNING
+                    else -> MetricStatus.ALERT
+                }
+            }
+            
+            METRIC_BLOOD_OXYGEN -> {
+                when {
+                    current >= 98 -> MetricStatus.EXCELLENT
+                    current >= 95 -> MetricStatus.NORMAL
+                    current >= 92 -> MetricStatus.WARNING
+                    else -> MetricStatus.ALERT
+                }
+            }
+            
+            METRIC_BLOOD_PRESSURE -> {
+                // Using systolic for status
+                when {
+                    current >= 110 && current <= 120 -> MetricStatus.EXCELLENT
+                    current >= normalMin && current <= normalMax -> MetricStatus.NORMAL
+                    current > normalMax && current <= 140 -> MetricStatus.WARNING
+                    current < normalMin && current >= 85 -> MetricStatus.WARNING
+                    else -> MetricStatus.ALERT
+                }
+            }
+            
+            else -> {
+                // Default logic for other metrics
+                when {
+                    current >= normalMin && current <= normalMax -> {
+                        // Within normal range
+                        val optimal = (normalMin + normalMax) / 2
+                        val deviation = Math.abs(current - optimal)
+                        val maxDeviation = (normalMax - normalMin) / 2
+                        if (deviation < maxDeviation * 0.3) {
+                            MetricStatus.EXCELLENT
+                        } else {
+                            MetricStatus.NORMAL
+                        }
+                    }
+                    current < normalMin -> {
+                        // Below normal
+                        if (current > normalMin * 0.9) {
+                            MetricStatus.WARNING
+                        } else {
+                            MetricStatus.ALERT
+                        }
+                    }
+                    else -> {
+                        // Above normal
+                        if (current < normalMax * 1.1) {
+                            MetricStatus.WARNING
+                        } else {
+                            MetricStatus.ALERT
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Update insights based on health data
+     */
+    private fun updateInsights() {
+        try {
+            // Determine primary insight based on health score and metrics
+            val (title, content) = when {
+                healthScore >= HEALTH_EXCELLENT -> {
+                    Pair(
+                        "Excellent Health Status",
+                        "Your overall health metrics are excellent. You're maintaining optimal levels across most health indicators, " +
+                        "especially ${getTopMetric()} and ${getSecondTopMetric()}. Continue your current health practices."
+                    )
+                }
+                healthScore >= HEALTH_GOOD -> {
+                    val weakMetric = getWeakestMetric()
+                    Pair(
+                        "Good Health with Room for Improvement",
+                        "Your overall health is good, with strong performance in ${getTopMetric()}. " +
+                        "Consider focusing on improving your $weakMetric, which is slightly outside optimal range."
+                    )
+                }
+                healthScore >= HEALTH_MODERATE -> {
+                    val weakMetrics = getWeakestMetrics(2)
+                    Pair(
+                        "Several Metrics Need Attention",
+                        "Your health score indicates moderate health status. Pay attention to ${weakMetrics.first} " +
+                        "and ${weakMetrics.second}, which are significantly outside their optimal ranges."
+                    )
+                }
+                else -> {
+                    Pair(
+                        "Health Status Needs Immediate Attention",
+                        "Several of your health metrics require attention, particularly ${getWeakestMetric()} " +
+                        "and ${getSecondWeakestMetric()}. Consider consulting a healthcare professional about these readings."
+                    )
+                }
+            }
+            
+            // Update UI
+            tvInsightTitle.text = title
+            tvInsightContent.text = content
+        } catch (e: Exception) {
+            // Silent failure for this non-critical feature
+        }
+    }
+    
+    /**
+     * Update recommendations based on health data
+     */
+    private fun updateRecommendations() {
+        try {
+            // Generate recommendations based on metrics
+            val weakestMetric = getWeakestMetric()
+            val secondWeakestMetric = getSecondWeakestMetric()
+            
+            // Primary recommendation based on weakest metric
+            val (title, content) = when (weakestMetric) {
+                "Heart Rate" -> {
+                    val data = metricData[METRIC_HEART_RATE]
+                    if (data != null && data.current > data.normalMax) {
+                        Pair(
+                            "Heart Rate Management",
+                            "Your heart rate is elevated. Consider stress reduction techniques, adequate hydration, " +
+                            "and consulting with your healthcare provider if this persists. Limit caffeine and practice deep breathing exercises."
+                        )
+                    } else {
+                        Pair(
+                            "Heart Rate Improvement",
+                            "Your heart rate is lower than optimal. Consider moderate cardiovascular exercise, staying hydrated, " +
+                            "and consulting with your healthcare provider to rule out any underlying conditions."
+                        )
+                    }
+                }
+                
+                "Sleep" -> {
+                    Pair(
+                        "Sleep Quality Improvement",
+                        "Improve your sleep by maintaining a consistent sleep schedule, creating a relaxing bedtime routine, " +
+                        "limiting screen time before bed, ensuring your bedroom is dark and cool, and avoiding caffeine and large meals before bedtime."
+                    )
+                }
+                
+                "Steps" -> {
+                    Pair(
+                        "Increase Daily Activity",
+                        "Try to increase your daily steps by taking short walking breaks during work, using stairs instead of elevators, " +
+                        "parking farther from entrances, walking during phone calls, and scheduling dedicated walking time each day."
+                    )
+                }
+                
+                "Stress" -> {
+                    Pair(
+                        "Stress Management",
+                        "Reduce stress through regular mindfulness meditation, deep breathing exercises, physical activity, " +
+                        "adequate sleep, time management techniques, and limiting exposure to stressors when possible."
+                    )
+                }
+                
+                "HRV" -> {
+                    Pair(
+                        "Heart Rate Variability Improvement",
+                        "Improve your HRV by practicing slow, deep breathing exercises, maintaining regular physical activity, " +
+                        "ensuring adequate sleep, staying hydrated, and managing stress effectively."
+                    )
+                }
+                
+                "Blood Oxygen" -> {
+                    Pair(
+                        "Blood Oxygen Optimization",
+                        "Maintain healthy blood oxygen levels through regular cardiovascular exercise, proper breathing techniques, " +
+                        "good posture, adequate hydration, and avoiding smoking. If levels remain low, consult a healthcare provider."
+                    )
+                }
+                
+                "Blood Pressure" -> {
+                    val data = metricData[METRIC_BLOOD_PRESSURE]
+                    if (data != null && data.current > data.normalMax) {
+                        Pair(
+                            "Blood Pressure Management",
+                            "Help lower your blood pressure by reducing sodium intake, maintaining a healthy weight, " +
+                            "regular physical activity, limiting alcohol, managing stress, and following your healthcare provider's recommendations."
+                        )
+                    } else {
+                        Pair(
+                            "Blood Pressure Support",
+                            "Support healthy blood pressure by staying well-hydrated, consuming adequate sodium (but not excessive), " +
+                            "regular physical activity, and consulting with your healthcare provider."
+                        )
+                    }
+                }
+                
+                else -> {
+                    // Default recommendation
+                    Pair(
+                        "General Health Optimization",
+                        "Focus on the fundamentals: regular physical activity, balanced nutrition, adequate hydration, " +
+                        "quality sleep, stress management, and regular health check-ups with your healthcare provider."
+                    )
+                }
+            }
+            
+            // Additional recommendation based on second weakest metric
+            val additionalRecommendation = when (secondWeakestMetric) {
+                "Heart Rate" -> "Also monitor your heart rate during different activities to better understand your cardiovascular responses."
+                "Sleep" -> "Additionally, track your sleep patterns and identify factors that may be disrupting your sleep quality."
+                "Steps" -> "Consider using a step counter or setting step goals to motivate increased physical activity."
+                "Stress" -> "Regular relaxation practices can also help manage your stress levels throughout the day."
+                "HRV" -> "Tracking your HRV trends can provide insights into your body's recovery and stress response."
+                "Blood Oxygen" -> "Be mindful of your breathing patterns throughout the day, especially during physical activity."
+                "Blood Pressure" -> "Regular monitoring of your blood pressure can help you identify patterns and triggers."
+                else -> ""
+            }
+            
+            // Update UI
+            tvRecommendationTitle.text = title
+            tvRecommendationContent.text = if (additionalRecommendation.isNotEmpty()) {
+                "$content $additionalRecommendation"
+            } else {
+                content
+            }
+        } catch (e: Exception) {
+            // Silent failure for this non-critical feature
+        }
+    }
+    
+    /**
+     * Export health report as PDF
+     * In a real app, this would generate a proper PDF file
+     */
+    private fun exportHealthReport() {
+        try {
+            // In a real app, this would generate a PDF with all health data
+            // For now, we'll create a simple text file
+            
+            val reportText = generateReportText()
+            
+            // Create file in app's files directory
+            val fileName = "SensacareHealthReport_${SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())}.txt"
+            val file = File(getExternalFilesDir(null), fileName)
+            
+            // Write report to file
+            FileOutputStream(file).use { stream ->
+                stream.write(reportText.toByteArray())
+            }
+            
+            Toast.makeText(this, "Report exported to: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+            
+            // Open file with external app
+            val intent = Intent(Intent.ACTION_VIEW)
+            val fileUri = FileProvider.getUriForFile(
+                this,
+                "${packageName}.fileprovider",
+                file
+            )
+            intent.setDataAndType(fileUri, "text/plain")
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            
+            startActivity(Intent.createChooser(intent, "Open Report With"))
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error exporting report: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * Share health report
+     */
+    private fun shareHealthReport() {
+        try {
+            val shareIntent = Intent(Intent.ACTION_SEND)
+            shareIntent.type = "text/plain"
+            
+            // Generate report text
+            val reportText = generateReportText()
+            
+            // Set up share intent
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Sensacare Health Report")
+            shareIntent.putExtra(Intent.EXTRA_TEXT, reportText)
+            
+            startActivity(Intent.createChooser(shareIntent, "Share Health Report"))
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error sharing report: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * Generate report text for export/sharing
+     */
+    private fun generateReportText(): String {
+        val dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault())
+        val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
+        val now = Date()
+        
+        val sb = StringBuilder()
+        
+        // Header
+        sb.appendLine("SENSACARE HEALTH REPORT")
+        sb.appendLine("Generated on: ${dateFormat.format(now)} at ${timeFormat.format(now)}")
+        sb.appendLine("=" * 50)
+        sb.appendLine()
+        
+        // Period
+        sb.appendLine("Report Period: ${tvPeriodLabel.text}")
+        sb.appendLine()
+        
+        // Health Score
+        sb.appendLine("OVERALL HEALTH SCORE: $healthScore/100 (${tvHealthStatus.text})")
+        sb.appendLine("Comparison to previous period: ${tvComparisonValue.text}")
+        sb.appendLine()
+        
+        // Metrics
+        sb.appendLine("HEALTH METRICS:")
+        sb.appendLine("-" * 30)
+        
+        // Add each metric
+        for ((key, data) in metricData) {
+            val metricName = when (key) {
+                METRIC_HEART_RATE -> "Heart Rate"
+                METRIC_SLEEP -> "Sleep"
+                METRIC_STEPS -> "Steps"
+                METRIC_STRESS -> "Stress Level"
+                METRIC_HRV -> "Heart Rate Variability"
+                METRIC_TEMPERATURE -> "Body Temperature"
+                METRIC_BLOOD_OXYGEN -> "Blood Oxygen"
+                METRIC_BLOOD_PRESSURE -> "Blood Pressure"
+                METRIC_RESPIRATORY_RATE -> "Respiratory Rate"
+                else -> key
+            }
+            
+            val valueText = when (key) {
+                METRIC_BLOOD_PRESSURE -> {
+                    "${data.current.toInt()}/${data.secondaryValue ?: 0} ${data.unit}"
+                }
+                METRIC_SLEEP, METRIC_TEMPERATURE -> {
+                    String.format("%.1f %s", data.current, data.unit)
+                }
+                else -> {
+                    "${data.current.toInt()} ${data.unit}"
+                }
+            }
+            
+            val rangeText = "Normal range: ${data.normalMin.toInt()}-${data.normalMax.toInt()} ${data.unit}"
+            val statusText = when (getMetricStatus(key, data)) {
+                MetricStatus.EXCELLENT -> "EXCELLENT"
+                MetricStatus.NORMAL -> "NORMAL"
+                MetricStatus.WARNING -> "ATTENTION NEEDED"
+                MetricStatus.ALERT -> "ALERT"
+            }
+            
+            sb.appendLine("$metricName: $valueText ($statusText)")
+            sb.appendLine("  $rangeText")
+            sb.appendLine("  Average: ${String.format("%.1f", data.avg)} ${data.unit}, Range: ${data.min.toInt()}-${data.max.toInt()} ${data.unit}")
+            sb.appendLine()
+        }
+        
+        // Insights
+        sb.appendLine("HEALTH INSIGHTS:")
+        sb.appendLine("-" * 30)
+        sb.appendLine(tvInsightTitle.text)
+        sb.appendLine(tvInsightContent.text)
+        sb.appendLine()
+        
+        // Recommendations
+        sb.appendLine("RECOMMENDATIONS:")
+        sb.appendLine("-" * 30)
+        sb.appendLine(tvRecommendationTitle.text)
+        sb.appendLine(tvRecommendationContent.text)
+        sb.appendLine()
+        
+        // Footer
+        sb.appendLine("=" * 50)
+        sb.appendLine("This report is generated by the Sensacare Health Monitoring App.")
+        sb.appendLine("Please consult with a healthcare professional for medical advice.")
+        
+        return sb.toString()
+    }
+    
+    /**
+     * Get the metric with the highest score
+     */
+    private fun getTopMetric(): String {
+        var topMetric = ""
+        var topScore = 0.0
+        
+        for ((key, data) in metricData) {
+            val score = calculateMetricScore(key, data)
+            if (score > topScore) {
+                topScore = score
+                topMetric = getMetricDisplayName(key)
+            }
+        }
+        
+        return topMetric
+    }
+    
+    /**
+     * Get the second highest scoring metric
+     */
+    private fun getSecondTopMetric(): String {
+        val topMetric = getTopMetric()
+        var secondTopMetric = ""
+        var secondTopScore = 0.0
+        
+        for ((key, data) in metricData) {
+            if (getMetricDisplayName(key) != topMetric) {
+                val score = calculateMetricScore(key, data)
+                if (score > secondTopScore) {
+                    secondTopScore = score
+                    secondTopMetric = getMetricDisplayName(key)
+                }
+            }
+        }
+        
+        return secondTopMetric
+    }
+    
+    /**
+     * Get the metric with the lowest score
+     */
+    private fun getWeakestMetric(): String {
+        var weakestMetric = ""
+        var lowestScore = 100.0
+        
+        for ((key, data) in metricData) {
+            val score = calculateMetricScore(key, data)
+            if (score < lowestScore) {
+                lowestScore = score
+                weakestMetric = getMetricDisplayName(key)
+            }
+        }
+        
+        return weakestMetric
+    }
+    
+    /**
+     * Get the second lowest scoring metric
+     */
+    private fun getSecondWeakestMetric(): String {
+        val weakestMetric = getWeakestMetric()
+        var secondWeakestMetric = ""
+        var secondLowestScore = 100.0
+        
+        for ((key, data) in metricData) {
+            if (getMetricDisplayName(key) != weakestMetric) {
+                val score = calculateMetricScore(key, data)
+                if (score < secondLowestScore) {
+                    secondLowestScore = score
+                    secondWeakestMetric = getMetricDisplayName(key)
+                }
+            }
+        }
+        
+        return secondWeakestMetric
+    }
+    
+    /**
+     * Get the two weakest metrics
+     */
+    private fun getWeakestMetrics(count: Int): Pair<String, String> {
+        val first = getWeakestMetric()
+        val second = getSecondWeakestMetric()
+        return Pair(first, second)
+    }
+    
+    /**
+     * Get display name for a metric key
+     */
+    private fun getMetricDisplayName(key: String): String {
+        return when (key) {
+            METRIC_HEART_RATE -> "Heart Rate"
+            METRIC_SLEEP -> "Sleep"
+            METRIC_STEPS -> "Steps"
+            METRIC_STRESS -> "Stress Level"
+            METRIC_HRV -> "Heart Rate Variability"
+            METRIC_TEMPERATURE -> "Body Temperature"
+            METRIC_BLOOD_OXYGEN -> "Blood Oxygen"
+            METRIC_BLOOD_PRESSURE -> "Blood Pressure"
+            METRIC_RESPIRATORY_RATE -> "Respiratory Rate"
+            else -> key
+        }
+    }
+    
+    /**
+     * Generate simulated hourly data for a day
+     */
+    private fun generateHourlyData(min: Int, max: Int, current: Number): List<Double> {
+        val random = Random()
+        val result = mutableListOf<Double>()
+        
+        // Generate 24 hours of data
+        for (hour in 0..23) {
+            // More variation during active hours (8am-10pm)
+            val variation = if (hour in 8..22) {
+                (random.nextInt(max - min) / 5.0) - ((max - min) / 10.0)
+            } else {
+                (random.nextInt(max - min) / 10.0) - ((max - min) / 20.0)
+            }
+            
+            // Base value depends on time of day
+            val baseValue = when {
+                hour < 6 -> min + (max - min) * 0.3 // Early morning
+                hour < 10 -> min + (max - min) * 0.5 // Morning
+                hour < 14 -> min + (max - min) * 0.7 // Midday
+                hour < 18 -> min + (max - min) * 0.6 // Afternoon
+                hour < 22 -> min + (max - min) * 0.5 // Evening
+                else -> min + (max - min) * 0.4 // Night
+            }
+            
+            // Add to result, ensuring it stays within min-max range
+            result.add(max(min.toDouble(), min(max.toDouble(), baseValue + variation)))
+        }
+        
+        // Ensure the last value matches the current value
+        if (result.isNotEmpty()) {
+            result[result.size - 1] = current.toDouble()
+        }
+        
+        return result
+    }
+    
+    /**
+     * Generate simulated daily data for a week
+     */
+    private fun generateDailyData(min: Double, max: Double, avg: Double): List<Double> {
+        val random = Random()
+        val result = mutableListOf<Double>()
+        
+        // Generate 7 days of data
+        for (day in 1..7) {
+            // More variation on weekends
+            val variation = if (day in 1..5) {
+                (random.nextInt((max - min).toInt()) / 5.0) - ((max - min) / 10.0)
+            } else {
+                (random.nextInt((max - min).toInt()) / 3.0) - ((max - min) / 6.0)
+            }
+            
+            // Add to result, ensuring it stays within min-max range
+            result.add(max(min, min(max, avg + variation)))
+        }
+        
+        return result
+    }
+    
+    /**
+     * Generate simulated cumulative hourly data (e.g., for steps)
+     */
+    private fun generateCumulativeHourlyData(target: Int): List<Double> {
+        val result = mutableListOf<Double>()
+        val random = Random()
+        
+        // Generate 24 hours of cumulative data
+        var cumulative = 0.0
+        for (hour in 0..23) {
+            // Steps increase more during active hours
+            val hourlySteps = when {
+                hour < 6 -> random.nextInt(100) // Very few steps during sleep
+                hour < 9 -> 500 + random.nextInt(500) // Morning routine
+                hour < 12 -> 1000 + random.nextInt(1000) // Morning activity
+                hour < 14 -> 500 + random.nextInt(500) // Lunch time
+                hour < 17 -> 1000 + random.nextInt(1000) // Afternoon activity
+                hour < 20 -> 1500 + random.nextInt(1000) // Evening activity
+                hour < 22 -> 500 + random.nextInt(500) // Evening wind-down
+                else -> random.nextInt(100) // Very few steps before sleep
+            }
+            
+            cumulative += hourlySteps
+            result.add(cumulative)
+        }
+        
+        // Scale to match target
+        val scaleFactor = target / result.last()
+        return result.map { it * scaleFactor }
+    }
+    
+    /**
+     * Show or hide loading indicator
+     */
+    private fun showLoading(show: Boolean) {
+        progressLoading.visibility = if (show) View.VISIBLE else View.GONE
+        chartCombined.visibility = if (show) View.INVISIBLE else View.VISIBLE
+    }
+    
+    /**
+     * Data class to hold metric data
+     */
+    data class MetricData(
+        val current: Number,
+        val min: Number,
+        val max: Number,
+        val avg: Double,
+        val normalMin: Double,
+        val normalMax: Double,
+        val unit: String,
+        val dailyData: List<Double>,
+        val weeklyData: List<Double>,
+        val secondaryValue: Int? = null,
+        val secondaryUnit: String? = null
+    )
+    
+    /**
+     * Enum for metric status
+     */
+    enum class MetricStatus {
+        EXCELLENT,
+        NORMAL,
+        WARNING,
+        ALERT
+    }
+    
+    /**
+     * String multiplication operator
+     */
+    private operator fun String.times(count: Int): String {
+        val builder = StringBuilder()
+        repeat(count) {
+            builder.append(this)
+        }
+        return builder.toString()
+    }
+}

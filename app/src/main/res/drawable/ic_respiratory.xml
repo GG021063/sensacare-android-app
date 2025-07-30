@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    
+    <!-- Trachea (windpipe) -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M12,2L12,8" 
+        android:strokeColor="#000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round" />
+    
+    <!-- Left and right bronchi (branches) -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M12,8L8,12" 
+        android:strokeColor="#000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round" />
+    
+    <path
+        android:fillColor="#000000"
+        android:pathData="M12,8L16,12" 
+        android:strokeColor="#000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round" />
+    
+    <!-- Left lung -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M8,12c-2,0 -4,2 -4,5c0,3 2,5 4,5c2,0 4,-1 4,-5V12" />
+    
+    <!-- Right lung -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M16,12c2,0 4,2 4,5c0,3 -2,5 -4,5c-2,0 -4,-1 -4,-5V12" />
+    
+    <!-- Air flow indicators (subtle waves) -->
+    <path
+        android:strokeColor="#000000"
+        android:strokeWidth="0.7"
+        android:strokeLineCap="round"
+        android:pathData="M6,14c0.5,0 1,-0.5 1.5,0s1,-0.5 1.5,0" />
+    
+    <path
+        android:strokeColor="#000000"
+        android:strokeWidth="0.7"
+        android:strokeLineCap="round"
+        android:pathData="M15,14c0.5,0 1,-0.5 1.5,0s1,-0.5 1.5,0" />
+    
+    <path
+        android:strokeColor="#000000"
+        android:strokeWidth="0.7"
+        android:strokeLineCap="round"
+        android:pathData="M7,17c0.5,0 1,-0.5 1.5,0s1,-0.5 1.5,0" />
+    
+    <path
+        android:strokeColor="#000000"
+        android:strokeWidth="0.7"
+        android:strokeLineCap="round"
+        android:pathData="M14,17c0.5,0 1,-0.5 1.5,0s1,-0.5 1.5,0" />
+</vector>

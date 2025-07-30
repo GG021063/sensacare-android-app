@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Blood droplet shape -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,2C8.14,7.08 5,10.94 5,14.5C5,18.64 8.14,22 12,22C15.86,22 19,18.64 19,14.5C19,10.94 15.86,7.08 12,2Z" />
+
+    <!-- Oxygen symbol (O2) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M9.5,12.5C9.5,11.12 10.62,10 12,10C13.38,10 14.5,11.12 14.5,12.5C14.5,13.88 13.38,15 12,15C10.62,15 9.5,13.88 9.5,12.5Z"
+        android:strokeWidth="1.5"
+        android:strokeColor="#000000" />
+
+    <!-- Number 2 for O2 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M15,16.5C15,15.67 15.67,15 16.5,15C17.33,15 18,15.67 18,16.5C18,17.33 17.33,18 16.5,18L15,18L15,17L16.5,17C16.78,17 17,16.78 17,16.5C17,16.22 16.78,16 16.5,16C16.22,16 16,16.22 16,16.5L15,16.5Z"
+        android:strokeWidth="0.5"
+        android:strokeColor="#000000" />
+
+    <!-- Small bubbles representing oxygen -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M10,17C10.55,17 11,17.45 11,18C11,18.55 10.55,19 10,19C9.45,19 9,18.55 9,18C9,17.45 9.45,17 10,17Z" />
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M8,14C8.55,14 9,14.45 9,15C9,15.55 8.55,16 8,16C7.45,16 7,15.55 7,15C7,14.45 7.45,14 8,14Z" />
+</vector>

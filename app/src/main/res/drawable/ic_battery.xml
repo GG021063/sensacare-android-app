@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108"
+    android:tint="#FF6B35">
+    <group android:scaleX="0.6"
+        android:scaleY="0.6"
+        android:translateX="21.6"
+        android:translateY="21.6">
+        <!-- Heart shape with pulse line -->
+        <path
+            android:fillColor="#FF6B35"
+            android:pathData="M54,94.5c-1.1,0 -2.2,-0.4 -3,-1.2l-30.6,-29.1C8.7,52.8 8.7,33.2 20.4,21.9c5.6,-5.4 13,-8.4 20.9,-8.4c7.9,0 15.3,3 20.9,8.4c5.6,-5.4 13,-8.4 20.9,-8.4c7.9,0 15.3,3 20.9,8.4c11.7,11.2 11.7,30.9 0,42.1L73.4,93.2c-0.8,0.8 -1.9,1.2 -3,1.2h-0.1L54,94.5z" />
+        
+        <!-- Pulse line -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M25,60h10l5,-15l10,30l10,-20l5,5h18" 
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="4"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+            
+        <!-- Plus sign -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M54,40L54,70"
+            android:strokeColor="#FFFFFF" 
+            android:strokeWidth="4"
+            android:strokeLineCap="round" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M39,55L69,55"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="4" 
+            android:strokeLineCap="round" />
+    </group>
+</vector>

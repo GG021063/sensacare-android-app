@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ui_background"
+    android:orientation="vertical"
+    tools:context=".WelcomeActivity">
+
+    <!-- ──────────────────────────────────────────────────────────────── -->
+    <!--  HERO IMAGE (Sensacare 3D Workflow)                            -->
+    <!--  Takes up the top third of the screen                          -->
+    <!-- ──────────────────────────────────────────────────────────────── -->
+
+    <ImageView
+        android:id="@+id/ivFrontHero"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        android:src="@drawable/sensacare_3d_workflow"
+        android:contentDescription="@null"
+        android:padding="16dp" />
+
+    <!-- Content Section -->
+    <!-- ──────────────────────────────────────────────────────────────── -->
+    <!--  CONTENT SECTION                                                -->
+    <!--  Takes up the bottom two-thirds of the screen                  -->
+    <!-- ──────────────────────────────────────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="2"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- Branding Section -->
+
+        <!-- Sensacare Yellow Logo -->
+        <ImageView
+            android:id="@+id/ivSensacareLogo"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_gravity="center_horizontal"
+            android:src="@drawable/sensacare_blue_logo"
+            android:contentDescription="Sensacare logo"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tvWelcome"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Welcome to"
+            android:textColor="@color/sensacare_blue"
+            android:textSize="24sp" />
+
+        <TextView
+            android:id="@+id/tvBrandName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sensacare"
+            android:textColor="@color/sensacare_blue"
+            android:textSize="40sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Subtitle -->
+        <TextView
+            android:id="@+id/tvSubtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Let's get started on a healthier lifestyle with Sensacare — an all-in-one health monitoring solution"
+            android:textColor="@color/ui_text_secondary"
+            android:textSize="16sp"
+            android:lineSpacingExtra="4dp"
+            android:layout_marginBottom="32dp" />
+
+        <!-- Get Started Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGetStarted"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Get started"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:textColor="@color/white"
+            app:cornerRadius="28dp"
+            android:backgroundTint="@color/sensacare_blue"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Register Text -->
+        <TextView
+            android:id="@+id/tvRegister"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Don't have an account? Register"
+            android:textColor="@color/ui_text_secondary"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:layout_marginBottom="8dp" />
+    </LinearLayout>
+</LinearLayout>

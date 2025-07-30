@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_home"
+        android:icon="@drawable/ic_home"
+        android:title="Home"
+        android:checked="true" />
+    <!-- Sleep -->
+    
+    <item
+        android:id="@+id/nav_sleep"
+        android:icon="@drawable/ic_sleep"
+        android:title="Sleep" />
+
+    <!-- Activity -->
+    <item
+        android:id="@+id/nav_activity"
+        android:icon="@drawable/ic_activity"
+        android:title="Activity" />
+
+    <!-- Wellbeing -->
+    <item
+        android:id="@+id/nav_wellbeing"
+        android:icon="@drawable/ic_wellbeing"
+        android:title="Wellbeing" />
+
+    <item
+        android:id="@+id/nav_profile"
+        android:icon="@drawable/ic_person"
+        android:title="Profile" />
+</menu>

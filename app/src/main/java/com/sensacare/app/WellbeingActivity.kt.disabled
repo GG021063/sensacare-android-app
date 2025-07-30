@@ -1,0 +1,1192 @@
+package com.sensacare.app
+
+import android.content.Intent
+import android.graphics.Color
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.MenuItem
+import android.view.View
+import android.widget.Button
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.ProgressBar
+import android.widget.SeekBar
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
+import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.formatter.ValueFormatter
+import com.sensacare.app.models.MoodEntry
+import com.sensacare.app.models.WellbeingGoal
+import com.sensacare.app.utils.PreferenceManager
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+import java.util.Random
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
+
+/**
+ * WellbeingActivity - Comprehensive mental health and wellbeing tracking
+ *
+ * Features:
+ * - Mood tracking with emoji selection and daily logging
+ * - Stress level monitoring with visual indicators
+ * - Wellbeing score calculation based on multiple metrics
+ * - Mental health insights and recommendations
+ * - Weekly mood trends chart
+ * - Mindfulness and breathing exercise suggestions
+ * - Sleep quality correlation with mood
+ * - Goal setting for wellbeing improvement
+ * - Progress tracking over time
+ * - Integration with other health metrics for holistic view
+ */
+class WellbeingActivity : AppCompatActivity() {
+
+    // UI Components
+    private lateinit var chartMoodTrend: LineChart
+    private lateinit var tvWellbeingScore: TextView
+    private lateinit var tvWellbeingStatus: TextView
+    private lateinit var progressWellbeing: ProgressBar
+    private lateinit var tvCurrentMood: TextView
+    private lateinit var tvStressLevel: TextView
+    private lateinit var seekBarStress: SeekBar
+    private lateinit var tvInsightTitle: TextView
+    private lateinit var tvInsightContent: TextView
+    private lateinit var btnSetGoal: Button
+    private lateinit var btnLogMood: Button
+    private lateinit var btnMindfulness: Button
+    private lateinit var cardWellbeingScore: CardView
+    private lateinit var cardMood: CardView
+    private lateinit var cardStress: CardView
+    private lateinit var cardInsights: CardView
+    private lateinit var cardGoals: CardView
+    private lateinit var progressLoading: ProgressBar
+    private lateinit var btnShare: ImageButton
+    
+    // Mood emoji buttons
+    private lateinit var btnMoodVeryHappy: ImageButton
+    private lateinit var btnMoodHappy: ImageButton
+    private lateinit var btnMoodNeutral: ImageButton
+    private lateinit var btnMoodSad: ImageButton
+    private lateinit var btnMoodVerySad: ImageButton
+    
+    // Goal progress views
+    private lateinit var tvGoalTitle: TextView
+    private lateinit var tvGoalProgress: TextView
+    private lateinit var progressGoal: ProgressBar
+    private lateinit var tvGoalDueDate: TextView
+    
+    // Sleep correlation view
+    private lateinit var tvSleepCorrelation: TextView
+    private lateinit var ivSleepCorrelation: ImageView
+    
+    // Data
+    private var moodHistory = mutableListOf<MoodEntry>()
+    private var currentMood = MOOD_NEUTRAL
+    private var currentStressLevel = 5 // 0-10 scale
+    private var wellbeingScore = 0 // 0-100 scale
+    private var currentGoal: WellbeingGoal? = null
+    
+    // Preferences
+    private lateinit var preferenceManager: PreferenceManager
+    
+    // Constants
+    companion object {
+        private const val TAG = "WellbeingActivity"
+        
+        // Mood constants
+        const val MOOD_VERY_HAPPY = 5
+        const val MOOD_HAPPY = 4
+        const val MOOD_NEUTRAL = 3
+        const val MOOD_SAD = 2
+        const val MOOD_VERY_SAD = 1
+        
+        // Wellbeing score thresholds
+        const val WELLBEING_EXCELLENT = 80
+        const val WELLBEING_GOOD = 60
+        const val WELLBEING_MODERATE = 40
+        const val WELLBEING_POOR = 20
+        
+        // Stress level thresholds
+        const val STRESS_LOW = 3
+        const val STRESS_MODERATE = 6
+        const val STRESS_HIGH = 8
+        
+        // Refresh interval
+        private const val REFRESH_INTERVAL = 60000L // 1 minute
+    }
+    
+    // Handler for periodic updates
+    private val handler = Handler(Looper.getMainLooper())
+    private val updateRunnable = object : Runnable {
+        override fun run() {
+            refreshData()
+            handler.postDelayed(this, REFRESH_INTERVAL)
+        }
+    }
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_wellbeing)
+        
+        try {
+            // Set up action bar
+            supportActionBar?.apply {
+                title = "Wellbeing"
+                setDisplayHomeAsUpEnabled(true)
+            }
+            
+            // Initialize preferences
+            preferenceManager = PreferenceManager(this)
+            
+            // Initialize UI components
+            initializeViews()
+            
+            // Set up mood selection
+            setupMoodSelection()
+            
+            // Set up stress level slider
+            setupStressSlider()
+            
+            // Set up chart
+            setupChart()
+            
+            // Set up buttons
+            setupButtons()
+            
+            // Initial data load
+            loadInitialData()
+            
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error initializing: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        // Start periodic updates
+        handler.postDelayed(updateRunnable, REFRESH_INTERVAL)
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        // Stop periodic updates
+        handler.removeCallbacks(updateRunnable)
+        
+        // Save current data
+        saveCurrentData()
+    }
+    
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                onBackPressed()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+    
+    /**
+     * Initialize all UI components
+     */
+    private fun initializeViews() {
+        // Charts and scores
+        chartMoodTrend = findViewById(R.id.chartMoodTrend)
+        tvWellbeingScore = findViewById(R.id.tvWellbeingScore)
+        tvWellbeingStatus = findViewById(R.id.tvWellbeingStatus)
+        progressWellbeing = findViewById(R.id.progressWellbeing)
+        
+        // Mood tracking
+        tvCurrentMood = findViewById(R.id.tvCurrentMood)
+        btnMoodVeryHappy = findViewById(R.id.btnMoodVeryHappy)
+        btnMoodHappy = findViewById(R.id.btnMoodHappy)
+        btnMoodNeutral = findViewById(R.id.btnMoodNeutral)
+        btnMoodSad = findViewById(R.id.btnMoodSad)
+        btnMoodVerySad = findViewById(R.id.btnMoodVerySad)
+        
+        // Stress tracking
+        tvStressLevel = findViewById(R.id.tvStressLevel)
+        seekBarStress = findViewById(R.id.seekBarStress)
+        
+        // Insights
+        tvInsightTitle = findViewById(R.id.tvInsightTitle)
+        tvInsightContent = findViewById(R.id.tvInsightContent)
+        
+        // Goals
+        tvGoalTitle = findViewById(R.id.tvGoalTitle)
+        tvGoalProgress = findViewById(R.id.tvGoalProgress)
+        progressGoal = findViewById(R.id.progressGoal)
+        tvGoalDueDate = findViewById(R.id.tvGoalDueDate)
+        
+        // Sleep correlation
+        tvSleepCorrelation = findViewById(R.id.tvSleepCorrelation)
+        ivSleepCorrelation = findViewById(R.id.ivSleepCorrelation)
+        
+        // Buttons
+        btnSetGoal = findViewById(R.id.btnSetGoal)
+        btnLogMood = findViewById(R.id.btnLogMood)
+        btnMindfulness = findViewById(R.id.btnMindfulness)
+        btnShare = findViewById(R.id.btnShare)
+        
+        // Cards
+        cardWellbeingScore = findViewById(R.id.cardWellbeingScore)
+        cardMood = findViewById(R.id.cardMood)
+        cardStress = findViewById(R.id.cardStress)
+        cardInsights = findViewById(R.id.cardInsights)
+        cardGoals = findViewById(R.id.cardGoals)
+        
+        // Loading indicator
+        progressLoading = findViewById(R.id.progressLoading)
+    }
+    
+    /**
+     * Set up mood selection buttons
+     */
+    private fun setupMoodSelection() {
+        // Very Happy
+        btnMoodVeryHappy.setOnClickListener {
+            selectMood(MOOD_VERY_HAPPY)
+        }
+        
+        // Happy
+        btnMoodHappy.setOnClickListener {
+            selectMood(MOOD_HAPPY)
+        }
+        
+        // Neutral
+        btnMoodNeutral.setOnClickListener {
+            selectMood(MOOD_NEUTRAL)
+        }
+        
+        // Sad
+        btnMoodSad.setOnClickListener {
+            selectMood(MOOD_SAD)
+        }
+        
+        // Very Sad
+        btnMoodVerySad.setOnClickListener {
+            selectMood(MOOD_VERY_SAD)
+        }
+    }
+    
+    /**
+     * Set up stress level slider
+     */
+    private fun setupStressSlider() {
+        seekBarStress.max = 10
+        seekBarStress.progress = currentStressLevel
+        
+        seekBarStress.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) {
+                    updateStressLevel(progress)
+                }
+            }
+            
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                // Not needed
+            }
+            
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                // Calculate new wellbeing score when stress level changes
+                calculateWellbeingScore()
+                updateWellbeingDisplay()
+                updateInsights()
+            }
+        })
+    }
+    
+    /**
+     * Set up action buttons
+     */
+    private fun setupButtons() {
+        // Log mood button
+        btnLogMood.setOnClickListener {
+            logCurrentMood()
+        }
+        
+        // Set goal button
+        btnSetGoal.setOnClickListener {
+            showGoalSettingDialog()
+        }
+        
+        // Mindfulness button
+        btnMindfulness.setOnClickListener {
+            showMindfulnessExercises()
+        }
+        
+        // Share button
+        btnShare.setOnClickListener {
+            shareWellbeingData()
+        }
+    }
+    
+    /**
+     * Configure the mood trend chart
+     */
+    private fun setupChart() {
+        try {
+            with(chartMoodTrend) {
+                description.isEnabled = false
+                setTouchEnabled(true)
+                isDragEnabled = true
+                setScaleEnabled(true)
+                setPinchZoom(true)
+                setDrawGridBackground(false)
+                
+                // X-axis setup
+                xAxis.apply {
+                    position = XAxis.XAxisPosition.BOTTOM
+                    textColor = ContextCompat.getColor(this@WellbeingActivity, R.color.text_primary)
+                    setDrawGridLines(false)
+                    valueFormatter = object : ValueFormatter() {
+                        private val sdf = SimpleDateFormat("EEE", Locale.getDefault())
+                        
+                        override fun getFormattedValue(value: Float): String {
+                            val date = Date(value.toLong())
+                            return sdf.format(date)
+                        }
+                    }
+                }
+                
+                // Left Y-axis setup
+                axisLeft.apply {
+                    textColor = ContextCompat.getColor(this@WellbeingActivity, R.color.text_primary)
+                    setDrawGridLines(true)
+                    axisMinimum = 0.5f // Just below the lowest mood value
+                    axisMaximum = 5.5f // Just above the highest mood value
+                    valueFormatter = object : ValueFormatter() {
+                        override fun getFormattedValue(value: Float): String {
+                            return when (value.roundToInt()) {
+                                MOOD_VERY_HAPPY -> "Very Happy"
+                                MOOD_HAPPY -> "Happy"
+                                MOOD_NEUTRAL -> "Neutral"
+                                MOOD_SAD -> "Sad"
+                                MOOD_VERY_SAD -> "Very Sad"
+                                else -> ""
+                            }
+                        }
+                    }
+                }
+                
+                // Right Y-axis setup (disabled)
+                axisRight.isEnabled = false
+                
+                // Legend setup
+                legend.apply {
+                    textColor = ContextCompat.getColor(this@WellbeingActivity, R.color.text_primary)
+                    verticalAlignment = com.github.mikephil.charting.components.Legend.LegendVerticalAlignment.BOTTOM
+                    horizontalAlignment = com.github.mikephil.charting.components.Legend.LegendHorizontalAlignment.CENTER
+                    orientation = com.github.mikephil.charting.components.Legend.LegendOrientation.HORIZONTAL
+                    setDrawInside(false)
+                }
+                
+                // Animate chart
+                animateX(1000)
+            }
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error setting up chart: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * Load initial wellbeing data (simulated for now)
+     */
+    private fun loadInitialData() {
+        showLoading(true)
+        
+        // Simulate loading delay
+        Handler(Looper.getMainLooper()).postDelayed({
+            try {
+                // Load saved mood history or generate simulated data if none exists
+                val savedMoodHistory = loadMoodHistory()
+                if (savedMoodHistory.isNotEmpty()) {
+                    moodHistory = savedMoodHistory
+                } else {
+                    // Generate 7 days of simulated data
+                    generateSimulatedMoodData()
+                }
+                
+                // Load saved current mood or use neutral as default
+                currentMood = preferenceManager.getInt("current_mood", MOOD_NEUTRAL)
+                
+                // Load saved stress level or use default
+                currentStressLevel = preferenceManager.getInt("current_stress", 5)
+                seekBarStress.progress = currentStressLevel
+                
+                // Load saved goal if exists
+                loadCurrentGoal()
+                
+                // Update mood display
+                updateMoodDisplay()
+                
+                // Update stress level display
+                updateStressLevel(currentStressLevel)
+                
+                // Calculate wellbeing score
+                calculateWellbeingScore()
+                
+                // Update chart with data
+                updateMoodChart()
+                
+                // Update wellbeing display
+                updateWellbeingDisplay()
+                
+                // Update insights based on data
+                updateInsights()
+                
+                // Update sleep correlation
+                updateSleepCorrelation()
+                
+                // Update goal progress
+                updateGoalProgress()
+                
+                showLoading(false)
+            } catch (e: Exception) {
+                Toast.makeText(this, "Error loading data: ${e.message}", Toast.LENGTH_SHORT).show()
+                showLoading(false)
+            }
+        }, 1000)
+    }
+    
+    /**
+     * Refresh wellbeing data
+     */
+    private fun refreshData() {
+        try {
+            // In a real implementation, this would fetch new data from various sources
+            // For now, we'll just update the UI with current data
+            
+            // Update wellbeing score (might change based on time of day or new health data)
+            calculateWellbeingScore()
+            
+            // Update displays
+            updateWellbeingDisplay()
+            updateInsights()
+            updateSleepCorrelation()
+            updateGoalProgress()
+            
+        } catch (e: Exception) {
+            // Silent failure for background refresh
+        }
+    }
+    
+    /**
+     * Save current wellbeing data
+     */
+    private fun saveCurrentData() {
+        try {
+            // Save current mood
+            preferenceManager.saveInt("current_mood", currentMood)
+            
+            // Save current stress level
+            preferenceManager.saveInt("current_stress", currentStressLevel)
+            
+            // Save mood history (in a real app, this would go to a database)
+            saveMoodHistory(moodHistory)
+            
+            // Save current goal
+            saveCurrentGoal()
+        } catch (e: Exception) {
+            // Silent failure for background save
+        }
+    }
+    
+    /**
+     * Select a mood and update the UI
+     */
+    private fun selectMood(mood: Int) {
+        currentMood = mood
+        updateMoodDisplay()
+        
+        // Recalculate wellbeing score
+        calculateWellbeingScore()
+        updateWellbeingDisplay()
+        updateInsights()
+        
+        // Highlight selected mood button
+        highlightSelectedMoodButton()
+    }
+    
+    /**
+     * Update the mood display based on current mood
+     */
+    private fun updateMoodDisplay() {
+        val moodText = when (currentMood) {
+            MOOD_VERY_HAPPY -> "Very Happy"
+            MOOD_HAPPY -> "Happy"
+            MOOD_NEUTRAL -> "Neutral"
+            MOOD_SAD -> "Sad"
+            MOOD_VERY_SAD -> "Very Sad"
+            else -> "Neutral"
+        }
+        
+        tvCurrentMood.text = moodText
+        highlightSelectedMoodButton()
+    }
+    
+    /**
+     * Highlight the selected mood button
+     */
+    private fun highlightSelectedMoodButton() {
+        // Reset all buttons to alpha 0.5
+        btnMoodVeryHappy.alpha = 0.5f
+        btnMoodHappy.alpha = 0.5f
+        btnMoodNeutral.alpha = 0.5f
+        btnMoodSad.alpha = 0.5f
+        btnMoodVerySad.alpha = 0.5f
+        
+        // Highlight selected button
+        when (currentMood) {
+            MOOD_VERY_HAPPY -> btnMoodVeryHappy.alpha = 1.0f
+            MOOD_HAPPY -> btnMoodHappy.alpha = 1.0f
+            MOOD_NEUTRAL -> btnMoodNeutral.alpha = 1.0f
+            MOOD_SAD -> btnMoodSad.alpha = 1.0f
+            MOOD_VERY_SAD -> btnMoodVerySad.alpha = 1.0f
+        }
+    }
+    
+    /**
+     * Update stress level display
+     */
+    private fun updateStressLevel(level: Int) {
+        currentStressLevel = level
+        
+        val stressText = when {
+            level <= STRESS_LOW -> "Low Stress"
+            level <= STRESS_MODERATE -> "Moderate Stress"
+            else -> "High Stress"
+        }
+        
+        val stressColor = when {
+            level <= STRESS_LOW -> ContextCompat.getColor(this, R.color.status_normal)
+            level <= STRESS_MODERATE -> ContextCompat.getColor(this, R.color.status_warning)
+            else -> ContextCompat.getColor(this, R.color.status_alert)
+        }
+        
+        tvStressLevel.text = stressText
+        tvStressLevel.setTextColor(stressColor)
+    }
+    
+    /**
+     * Calculate wellbeing score based on mood, stress, and other health metrics
+     */
+    private fun calculateWellbeingScore() {
+        // Start with base score from mood (1-5 scale to 0-100)
+        val moodScore = (currentMood - 1) * 25
+        
+        // Stress score (10-0 scale to 0-50)
+        val stressScore = (10 - currentStressLevel) * 5
+        
+        // Sleep score (simulated, would come from actual sleep data)
+        val sleepScore = getSleepScore()
+        
+        // Activity score (simulated, would come from actual activity data)
+        val activityScore = getActivityScore()
+        
+        // Calculate weighted average
+        wellbeingScore = (moodScore * 0.4 + stressScore * 0.3 + sleepScore * 0.2 + activityScore * 0.1).roundToInt()
+        
+        // Ensure score is within 0-100 range
+        wellbeingScore = max(0, min(100, wellbeingScore))
+    }
+    
+    /**
+     * Update wellbeing score display
+     */
+    private fun updateWellbeingDisplay() {
+        // Update score text
+        tvWellbeingScore.text = wellbeingScore.toString()
+        
+        // Update progress bar
+        progressWellbeing.progress = wellbeingScore
+        
+        // Update status text and color
+        val (statusText, statusColor) = when {
+            wellbeingScore >= WELLBEING_EXCELLENT -> Pair("Excellent", ContextCompat.getColor(this, R.color.status_excellent))
+            wellbeingScore >= WELLBEING_GOOD -> Pair("Good", ContextCompat.getColor(this, R.color.status_normal))
+            wellbeingScore >= WELLBEING_MODERATE -> Pair("Moderate", ContextCompat.getColor(this, R.color.status_warning))
+            wellbeingScore >= WELLBEING_POOR -> Pair("Poor", ContextCompat.getColor(this, R.color.status_alert))
+            else -> Pair("Very Poor", ContextCompat.getColor(this, R.color.status_critical))
+        }
+        
+        tvWellbeingStatus.text = statusText
+        tvWellbeingStatus.setTextColor(statusColor)
+    }
+    
+    /**
+     * Update the mood trend chart
+     */
+    private fun updateMoodChart() {
+        try {
+            if (moodHistory.isEmpty()) return
+            
+            // Create entries for chart
+            val entries = moodHistory.map { 
+                Entry(it.timestamp.toFloat(), it.mood.toFloat()) 
+            }
+            
+            // Create dataset
+            val dataSet = LineDataSet(entries, "Mood")
+            dataSet.apply {
+                color = ContextCompat.getColor(this@WellbeingActivity, R.color.sensacare_blue)
+                setCircleColor(ContextCompat.getColor(this@WellbeingActivity, R.color.sensacare_blue))
+                lineWidth = 2f
+                circleRadius = 4f
+                setDrawCircleHole(false)
+                valueTextSize = 9f
+                setDrawValues(false)
+                
+                // Add gradient fill
+                setDrawFilled(true)
+                fillColor = ContextCompat.getColor(this@WellbeingActivity, R.color.sensacare_blue_transparent)
+                fillAlpha = 150
+                
+                // Highlight
+                highLightColor = Color.RED
+                setDrawHighlightIndicators(true)
+            }
+            
+            // Create and set data
+            val lineData = LineData(dataSet)
+            chartMoodTrend.data = lineData
+            
+            // Refresh chart
+            chartMoodTrend.invalidate()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error updating chart: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * Update insights based on wellbeing data
+     */
+    private fun updateInsights() {
+        try {
+            // Determine insight based on wellbeing score, mood, and stress
+            val (title, content) = when {
+                wellbeingScore >= WELLBEING_EXCELLENT -> {
+                    Pair(
+                        "Excellent Wellbeing",
+                        "Your wellbeing score is excellent! You're managing stress well and maintaining a positive mood. " +
+                        "Continue your current practices and consider sharing what works with others who might benefit from your approach."
+                    )
+                }
+                wellbeingScore >= WELLBEING_GOOD -> {
+                    if (currentStressLevel > STRESS_MODERATE) {
+                        Pair(
+                            "Good Overall, But High Stress",
+                            "Your overall wellbeing is good, but your stress levels are elevated. Consider incorporating " +
+                            "stress-reduction techniques like deep breathing, meditation, or gentle exercise into your daily routine."
+                        )
+                    } else {
+                        Pair(
+                            "Good Wellbeing Balance",
+                            "You're maintaining a good wellbeing balance. To further improve, consider adding more physical " +
+                            "activity and ensuring consistent sleep patterns. Small improvements in these areas can boost your overall wellbeing."
+                        )
+                    }
+                }
+                wellbeingScore >= WELLBEING_MODERATE -> {
+                    if (currentMood <= MOOD_SAD) {
+                        Pair(
+                            "Mood Affecting Wellbeing",
+                            "Your current mood is affecting your overall wellbeing. Consider activities that bring you joy, " +
+                            "connecting with supportive friends or family, or spending time in nature. If low mood persists, " +
+                            "speaking with a healthcare professional can help."
+                        )
+                    } else if (currentStressLevel > STRESS_MODERATE) {
+                        Pair(
+                            "Stress Management Needed",
+                            "Your stress levels are significantly impacting your wellbeing. Prioritize stress management " +
+                            "techniques such as mindfulness, time management, and setting boundaries. The mindfulness exercises " +
+                            "in this app can help you get started."
+                        )
+                    } else {
+                        Pair(
+                            "Room for Improvement",
+                            "Your wellbeing score shows room for improvement across several areas. Focus on one area at a time - " +
+                            "perhaps start with improving sleep quality or adding a short daily walk. Small, consistent changes " +
+                            "can lead to significant improvements."
+                        )
+                    }
+                }
+                else -> {
+                    Pair(
+                        "Wellbeing Needs Attention",
+                        "Your wellbeing score indicates several areas that need attention. Consider reaching out to a healthcare " +
+                        "professional who can provide personalized support. In the meantime, focus on basics like regular meals, " +
+                        "hydration, gentle movement, and connecting with supportive people."
+                    )
+                }
+            }
+            
+            // Update UI
+            tvInsightTitle.text = title
+            tvInsightContent.text = content
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error updating insights: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * Update sleep correlation display
+     */
+    private fun updateSleepCorrelation() {
+        try {
+            // In a real app, this would analyze actual sleep data and mood trends
+            // For now, we'll simulate a correlation
+            
+            val sleepQuality = getSleepQuality()
+            val moodTrend = getMoodTrend()
+            
+            val correlationText = when {
+                sleepQuality == "Good" && moodTrend >= 0 -> 
+                    "Your good sleep quality correlates with your positive mood trend."
+                sleepQuality == "Poor" && moodTrend < 0 -> 
+                    "Your poor sleep quality may be contributing to your negative mood trend."
+                sleepQuality == "Good" && moodTrend < 0 -> 
+                    "Despite good sleep, your mood has been declining. Other factors may be affecting your wellbeing."
+                sleepQuality == "Poor" && moodTrend >= 0 -> 
+                    "Despite poor sleep, you're maintaining a positive mood. Consider how improved sleep might further boost your wellbeing."
+                else -> 
+                    "Sleep quality and mood correlation is neutral."
+            }
+            
+            tvSleepCorrelation.text = correlationText
+            
+            // Set appropriate icon
+            if (sleepQuality == "Good" && moodTrend >= 0) {
+                ivSleepCorrelation.setImageResource(R.drawable.ic_sleep_good)
+            } else if (sleepQuality == "Poor" && moodTrend < 0) {
+                ivSleepCorrelation.setImageResource(R.drawable.ic_sleep_poor)
+            } else {
+                ivSleepCorrelation.setImageResource(R.drawable.ic_sleep_neutral)
+            }
+            
+        } catch (e: Exception) {
+            // Silent failure for this non-critical feature
+        }
+    }
+    
+    /**
+     * Log current mood to history
+     */
+    private fun logCurrentMood() {
+        try {
+            val calendar = Calendar.getInstance()
+            val newEntry = MoodEntry(calendar.timeInMillis, currentMood, currentStressLevel)
+            
+            // Check if we already have an entry for today
+            val today = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+            
+            val existingTodayIndex = moodHistory.indexOfFirst { 
+                val entryDate = Calendar.getInstance().apply {
+                    timeInMillis = it.timestamp
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }.timeInMillis
+                
+                entryDate == today
+            }
+            
+            if (existingTodayIndex >= 0) {
+                // Replace today's entry
+                moodHistory[existingTodayIndex] = newEntry
+            } else {
+                // Add new entry
+                moodHistory.add(newEntry)
+            }
+            
+            // Sort by timestamp
+            moodHistory.sortBy { it.timestamp }
+            
+            // Update chart
+            updateMoodChart()
+            
+            // Save mood history
+            saveMoodHistory(moodHistory)
+            
+            Toast.makeText(this, "Mood logged successfully", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error logging mood: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * Show dialog for setting a new wellbeing goal
+     */
+    private fun showGoalSettingDialog() {
+        try {
+            // In a real app, this would show a custom dialog for goal setting
+            // For now, we'll simulate setting a new goal
+            
+            // Create a new goal (in a real app, this would come from user input)
+            val goalTypes = listOf(
+                "Meditate for 10 minutes daily",
+                "Walk 8,000 steps daily",
+                "Practice gratitude journaling",
+                "Reduce stress level below 4",
+                "Maintain positive mood for a week",
+                "Get 7+ hours of sleep nightly",
+                "Take regular breaks during work"
+            )
+            
+            val randomGoal = goalTypes.random()
+            val dueDate = Calendar.getInstance().apply {
+                add(Calendar.DAY_OF_YEAR, 7) // One week from now
+            }.timeInMillis
+            
+            currentGoal = WellbeingGoal(
+                title = randomGoal,
+                startDate = System.currentTimeMillis(),
+                dueDate = dueDate,
+                progress = 0
+            )
+            
+            // Save the goal
+            saveCurrentGoal()
+            
+            // Update UI
+            updateGoalProgress()
+            
+            Toast.makeText(this, "New goal set: $randomGoal", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error setting goal: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * Update goal progress display
+     */
+    private fun updateGoalProgress() {
+        try {
+            val goal = currentGoal
+            
+            if (goal != null) {
+                // Show goal card
+                cardGoals.visibility = View.VISIBLE
+                
+                // Update goal title
+                tvGoalTitle.text = goal.title
+                
+                // Update progress text and bar
+                val progressText = "${goal.progress}%"
+                tvGoalProgress.text = progressText
+                progressGoal.progress = goal.progress
+                
+                // Update due date
+                val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                val dueDateText = "Due: ${dateFormat.format(Date(goal.dueDate))}"
+                tvGoalDueDate.text = dueDateText
+                
+                // Simulate progress increase (in a real app, this would be based on actual user actions)
+                simulateGoalProgress()
+            } else {
+                // Hide goal card if no goal is set
+                cardGoals.visibility = View.GONE
+            }
+        } catch (e: Exception) {
+            // Silent failure for this non-critical feature
+        }
+    }
+    
+    /**
+     * Simulate goal progress (in a real app, this would be based on user actions)
+     */
+    private fun simulateGoalProgress() {
+        val goal = currentGoal ?: return
+        
+        // Calculate days elapsed since goal started
+        val now = System.currentTimeMillis()
+        val totalDuration = goal.dueDate - goal.startDate
+        val elapsed = now - goal.startDate
+        
+        // Calculate progress percentage based on time elapsed
+        // Add some randomness to make it more realistic
+        val timeProgress = (elapsed.toFloat() / totalDuration * 100).toInt()
+        val randomFactor = (-10..10).random()
+        var newProgress = timeProgress + randomFactor
+        
+        // Ensure progress is within 0-100 range
+        newProgress = max(0, min(100, newProgress))
+        
+        // Update goal progress
+        if (newProgress != goal.progress) {
+            currentGoal = goal.copy(progress = newProgress)
+            saveCurrentGoal()
+        }
+    }
+    
+    /**
+     * Show mindfulness exercises
+     */
+    private fun showMindfulnessExercises() {
+        try {
+            // In a real app, this would navigate to a dedicated mindfulness screen
+            // For now, we'll show a toast with a simple exercise
+            
+            val exercises = listOf(
+                "Deep Breathing: Breathe in for 4 counts, hold for 7, exhale for 8. Repeat 5 times.",
+                "Body Scan: Starting from your toes, focus attention on each part of your body moving upward.",
+                "5-4-3-2-1 Grounding: Notice 5 things you see, 4 things you feel, 3 things you hear, 2 things you smell, and 1 thing you taste.",
+                "Mindful Walking: Focus on each step, feeling your feet touch the ground.",
+                "Gratitude Practice: Think of 3 things you're grateful for right now."
+            )
+            
+            val randomExercise = exercises.random()
+            Toast.makeText(this, randomExercise, Toast.LENGTH_LONG).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error showing mindfulness exercises: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * Share wellbeing data
+     */
+    private fun shareWellbeingData() {
+        try {
+            val shareIntent = Intent(Intent.ACTION_SEND)
+            shareIntent.type = "text/plain"
+            
+            // Format date for sharing
+            val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+            val currentDate = dateFormat.format(Date())
+            
+            // Create share text
+            val shareText = """
+                Sensacare Wellbeing Report - $currentDate
+                
+                Wellbeing Score: $wellbeingScore/100 (${tvWellbeingStatus.text})
+                Current Mood: ${tvCurrentMood.text}
+                Stress Level: ${tvStressLevel.text}
+                
+                Insight: ${tvInsightTitle.text}
+                
+                ${if (currentGoal != null) "Current Goal: ${currentGoal!!.title} (${currentGoal!!.progress}% complete)" else ""}
+                
+                Shared from Sensacare Health Monitoring App
+            """.trimIndent()
+            
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Sensacare Wellbeing Report")
+            shareIntent.putExtra(Intent.EXTRA_TEXT, shareText)
+            
+            startActivity(Intent.createChooser(shareIntent, "Share Wellbeing Data"))
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error sharing data: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * Generate simulated mood data for the past week
+     */
+    private fun generateSimulatedMoodData() {
+        moodHistory.clear()
+        val calendar = Calendar.getInstance()
+        val random = Random()
+        
+        // Set to 7 days ago
+        calendar.add(Calendar.DAY_OF_YEAR, -7)
+        
+        // Generate data points for past 7 days
+        for (i in 0..7) {
+            // Generate a realistic mood (1-5 scale)
+            val mood = random.nextInt(5) + 1
+            
+            // Generate a realistic stress level (0-10 scale)
+            val stress = random.nextInt(11)
+            
+            // Add data point
+            moodHistory.add(MoodEntry(calendar.timeInMillis, mood, stress))
+            
+            // Move forward 1 day
+            calendar.add(Calendar.DAY_OF_YEAR, 1)
+        }
+        
+        // Sort by timestamp
+        moodHistory.sortBy { it.timestamp }
+    }
+    
+    /**
+     * Get simulated sleep score (0-100)
+     * In a real app, this would come from actual sleep data
+     */
+    private fun getSleepScore(): Int {
+        // Simulate sleep score based on time of day and some randomness
+        val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+        
+        // Base score varies by time of day
+        val baseScore = when {
+            hour < 6 -> 70 // Early morning
+            hour < 10 -> 80 // Morning
+            hour < 14 -> 75 // Midday
+            hour < 18 -> 70 // Afternoon
+            hour < 22 -> 65 // Evening
+            else -> 60 // Night
+        }
+        
+        // Add some randomness
+        val randomFactor = (-10..10).random()
+        
+        // Return final score clamped to 0-100
+        return max(0, min(100, baseScore + randomFactor))
+    }
+    
+    /**
+     * Get simulated activity score (0-100)
+     * In a real app, this would come from actual activity data
+     */
+    private fun getActivityScore(): Int {
+        // Simulate activity score based on day of week and some randomness
+        val dayOfWeek = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
+        
+        // Base score varies by day of week
+        val baseScore = when (dayOfWeek) {
+            Calendar.MONDAY -> 65 // Start of week
+            Calendar.TUESDAY -> 70
+            Calendar.WEDNESDAY -> 75
+            Calendar.THURSDAY -> 70
+            Calendar.FRIDAY -> 65
+            Calendar.SATURDAY -> 80 // Weekend
+            Calendar.SUNDAY -> 75 // Weekend
+            else -> 70
+        }
+        
+        // Add some randomness
+        val randomFactor = (-15..15).random()
+        
+        // Return final score clamped to 0-100
+        return max(0, min(100, baseScore + randomFactor))
+    }
+    
+    /**
+     * Get sleep quality rating
+     * In a real app, this would be based on actual sleep data
+     */
+    private fun getSleepQuality(): String {
+        val sleepScore = getSleepScore()
+        return when {
+            sleepScore >= 80 -> "Good"
+            sleepScore >= 60 -> "Fair"
+            else -> "Poor"
+        }
+    }
+    
+    /**
+     * Get mood trend (positive or negative)
+     * Returns a value > 0 for positive trend, < 0 for negative trend
+     */
+    private fun getMoodTrend(): Int {
+        if (moodHistory.size < 2) return 0
+        
+        // Get recent mood entries (last 3 days or all if fewer)
+        val recentEntries = moodHistory.takeLast(min(3, moodHistory.size))
+        
+        // Calculate average mood change
+        var totalChange = 0
+        for (i in 1 until recentEntries.size) {
+            totalChange += recentEntries[i].mood - recentEntries[i-1].mood
+        }
+        
+        return totalChange
+    }
+    
+    /**
+     * Load mood history from preferences
+     * In a real app, this would come from a database
+     */
+    private fun loadMoodHistory(): List<MoodEntry> {
+        try {
+            // In a real app, this would load from a database
+            // For now, we'll return an empty list and use simulated data
+            return emptyList()
+        } catch (e: Exception) {
+            return emptyList()
+        }
+    }
+    
+    /**
+     * Save mood history to preferences
+     * In a real app, this would save to a database
+     */
+    private fun saveMoodHistory(history: List<MoodEntry>) {
+        try {
+            // In a real app, this would save to a database
+            // For now, we'll just log
+        } catch (e: Exception) {
+            // Silent failure
+        }
+    }
+    
+    /**
+     * Load current goal from preferences
+     */
+    private fun loadCurrentGoal() {
+        try {
+            // In a real app, this would load from preferences or database
+            // For now, we'll just create a default goal
+            
+            // 50% chance of having a goal
+            if (Random().nextBoolean()) {
+                val dueDate = Calendar.getInstance().apply {
+                    add(Calendar.DAY_OF_YEAR, 7) // One week from now
+                }.timeInMillis
+                
+                currentGoal = WellbeingGoal(
+                    title = "Practice mindfulness for 10 minutes daily",
+                    startDate = System.currentTimeMillis() - (3 * 24 * 60 * 60 * 1000), // Started 3 days ago
+                    dueDate = dueDate,
+                    progress = 40 // 40% complete
+                )
+            }
+        } catch (e: Exception) {
+            // Default to no goal
+            currentGoal = null
+        }
+    }
+    
+    /**
+     * Save current goal to preferences
+     */
+    private fun saveCurrentGoal() {
+        try {
+            // In a real app, this would save to preferences or database
+            // For now, we'll just log
+        } catch (e: Exception) {
+            // Silent failure
+        }
+    }
+    
+    /**
+     * Show or hide loading indicator
+     */
+    private fun showLoading(show: Boolean) {
+        progressLoading.visibility = if (show) View.VISIBLE else View.GONE
+        chartMoodTrend.visibility = if (show) View.INVISIBLE else View.VISIBLE
+        cardWellbeingScore.visibility = if (show) View.INVISIBLE else View.VISIBLE
+        cardMood.visibility = if (show) View.INVISIBLE else View.VISIBLE
+        cardStress.visibility = if (show) View.INVISIBLE else View.VISIBLE
+        cardInsights.visibility = if (show) View.INVISIBLE else View.VISIBLE
+        if (currentGoal != null) {
+            cardGoals.visibility = if (show) View.INVISIBLE else View.VISIBLE
+        }
+    }
+}

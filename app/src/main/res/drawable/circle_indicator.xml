@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    
+    <!-- White fill -->
+    <solid android:color="#FFFFFF" />
+    
+    <!-- Purple border -->
+    <stroke
+        android:width="2dp"
+        android:color="@color/light_sleep_purple" />
+    
+    <!-- Size - will be overridden by layout parameters -->
+    <size
+        android:width="16dp"
+        android:height="16dp" />
+    
+    <!-- Shadow effect -->
+    <padding
+        android:bottom="1dp"
+        android:left="1dp"
+        android:right="1dp"
+        android:top="1dp" />
+</shape>

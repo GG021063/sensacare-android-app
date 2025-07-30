@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Brain outline shape -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,3C7.58,3 4,6.58 4,11C4,14.08 5.67,16.75 8.17,18.1C8.06,18.38 8,18.69 8,19C8,20.1 8.9,21 10,21C10.45,21 10.87,20.85 11.2,20.6C11.53,20.85 11.95,21 12.4,21C13.5,21 14.4,20.1 14.4,19C14.4,18.87 14.38,18.75 14.35,18.63C15.95,18.05 17.3,17 18.25,15.63C18.72,15.33 19,14.77 19,14.17C19,13.63 18.79,13.14 18.43,12.8C18.91,11.73 19.17,10.56 19.17,9.33C19.17,5.92 16.08,3.17 12.33,3.03C12.22,3.01 12.11,3 12,3Z" />
+
+    <!-- Brain folds/details -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeWidth="1"
+        android:strokeColor="#000000"
+        android:pathData="M12,3C7.58,3 4,6.58 4,11C4,14.08 5.67,16.75 8.17,18.1C8.06,18.38 8,18.69 8,19C8,20.1 8.9,21 10,21C10.45,21 10.87,20.85 11.2,20.6C11.53,20.85 11.95,21 12.4,21C13.5,21 14.4,20.1 14.4,19C14.4,18.87 14.38,18.75 14.35,18.63C15.95,18.05 17.3,17 18.25,15.63C18.72,15.33 19,14.77 19,14.17C19,13.63 18.79,13.14 18.43,12.8C18.91,11.73 19.17,10.56 19.17,9.33C19.17,5.92 16.08,3.17 12.33,3.03C12.22,3.01 12.11,3 12,3Z" />
+
+    <!-- Left brain hemisphere fold -->
+    <path
+        android:strokeWidth="0.8"
+        android:strokeColor="#000000"
+        android:pathData="M8,10C8,8.9 8.9,8 10,8C10.55,8 11.05,8.22 11.4,8.6" />
+
+    <!-- Right brain hemisphere fold -->
+    <path
+        android:strokeWidth="0.8"
+        android:strokeColor="#000000"
+        android:pathData="M12.6,8.6C12.95,8.22 13.45,8 14,8C15.1,8 16,8.9 16,10" />
+
+    <!-- Bottom brain fold -->
+    <path
+        android:strokeWidth="0.8"
+        android:strokeColor="#000000"
+        android:pathData="M10,16C10,14.9 10.9,14 12,14C13.1,14 14,14.9 14,16" />
+
+    <!-- Stress waves -->
+    <path
+        android:strokeWidth="0.8"
+        android:strokeColor="#000000"
+        android:strokeLineCap="round"
+        android:pathData="M7,12C8,11 9,13 10,12C11,11 12,13 13,12C14,11 15,13 16,12" />
+
+    <!-- Meditation circle -->
+    <path
+        android:strokeWidth="0.8"
+        android:strokeColor="#000000"
+        android:pathData="M12,11m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0" />
+</vector>

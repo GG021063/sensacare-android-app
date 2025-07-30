@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <!-- Home & Dashboard -->
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_dashboard"
+            android:icon="@drawable/ic_home"
+            android:title="Dashboard" />
+    </group>
+
+    <!-- Health Monitoring Section -->
+    <item android:title="Health Monitoring">
+        <menu>
+            <item
+                android:id="@+id/nav_heart_rate"
+                android:icon="@drawable/sensacare_logo_yellow"
+                android:title="Heart Rate" />
+            <item
+                android:id="@+id/nav_steps"
+                android:icon="@drawable/ic_steps"
+                android:title="Steps" />
+            <item
+                android:id="@+id/nav_sleep"
+                android:icon="@drawable/ic_sleep"
+                android:title="Sleep" />
+            <item
+                android:id="@+id/nav_blood_oxygen"
+                android:icon="@drawable/ic_blood_oxygen"
+                android:title="Blood Oxygen" />
+            <item
+                android:id="@+id/nav_stress"
+                android:icon="@drawable/ic_stress"
+                android:title="Stress" />
+            <item
+                android:id="@+id/nav_blood_pressure"
+                android:icon="@drawable/ic_blood_pressure"
+                android:title="Blood Pressure" />
+            <item
+                android:id="@+id/nav_health_charts"
+                android:icon="@drawable/ic_chart"
+                android:title="Health Charts" />
+        </menu>
+    </item>
+
+    <!-- Device Section -->
+    <item android:title="Device">
+        <menu>
+            <item
+                android:id="@+id/nav_connect_device"
+                android:icon="@drawable/ic_bluetooth_connected"
+                android:title="Connect Device" />
+        </menu>
+    </item>
+
+    <!-- Settings & Account Section -->
+    <item android:title="Settings &amp; Account">
+        <menu>
+            <item
+                android:id="@+id/action_settings"
+                android:icon="@drawable/ic_settings"
+                android:title="Settings" />
+            <item
+                android:id="@+id/action_refresh"
+                android:icon="@drawable/ic_refresh"
+                android:title="Refresh Data" />
+            <item
+                android:id="@+id/nav_logout"
+                android:icon="@drawable/ic_arrow_back"
+                android:title="Logout" />
+        </menu>
+    </item>
+</menu>

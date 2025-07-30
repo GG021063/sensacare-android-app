@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base application theme. -->
+    <style name="Theme.SensaCare" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Primary brand color – switched to Sensacare blue palette -->
+        <item name="colorPrimary">@color/sensacare_blue</item>
+        <item name="colorPrimaryVariant">@color/sensacare_primary_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondaryVariant">@color/teal_700</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <!-- Status & navigation bars now use Sensacare blue variant -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <!-- Customize your theme here. -->
+        <item name="android:windowBackground">@color/background_light</item>
+        <item name="android:navigationBarColor">@color/sensacare_primary_dark</item>
+        <!-- Material 3 attributes -->
+        <item name="colorSurface">@color/surface_light</item>
+        <item name="colorOnSurface">@color/on_surface_light</item>
+        <item name="colorSurfaceVariant">@color/surface_variant_light</item>
+        <item name="colorOnSurfaceVariant">@color/on_surface_variant_light</item>
+        <item name="colorOutline">@color/outline_light</item>
+        <!-- ───────  UI FEEDBACK  ─────── -->
+        <!-- Light semi-transparent highlight & ripple for list / menu selections -->
+        <item name="android:colorControlHighlight">@color/menu_item_highlight</item>
+        <!-- Give all popup menus the same readable palette -->
+        <item name="popupTheme">@style/ThemeOverlay.SensaCare.PopupMenu</item>
+        <!-- Force alert / confirm dialogs to use a clean white background with dark text -->
+        <item name="android:dialogTheme">@style/SensaCare.Dialog</item>
+        <!-- Typography -->
+        <item name="textAppearanceHeadlineLarge">@style/TextAppearance.SensaCare.HeadlineLarge</item>
+        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.SensaCare.HeadlineMedium</item>
+        <item name="textAppearanceBodyLarge">@style/TextAppearance.SensaCare.BodyLarge</item>
+        <item name="textAppearanceBodyMedium">@style/TextAppearance.SensaCare.BodyMedium</item>
+    </style>
+
+    <!-- Text styles -->
+    <style name="TextAppearance.SensaCare.HeadlineLarge" parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="TextAppearance.SensaCare.HeadlineMedium" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="TextAppearance.SensaCare.BodyLarge" parent="TextAppearance.Material3.BodyLarge">
+        <item name="fontFamily">sans-serif</item>
+    </style>
+
+    <style name="TextAppearance.SensaCare.BodyMedium" parent="TextAppearance.Material3.BodyMedium">
+        <item name="fontFamily">sans-serif</item>
+    </style>
+
+    <!-- ──────────────────────────────────────────────────────── -->
+    <!--   Custom Dialog & PopupMenu overlays for readability    -->
+    <!-- ──────────────────────────────────────────────────────── -->
+
+    <!-- Alert / confirmation dialogs -->
+    <style name="SensaCare.Dialog" parent="Theme.Material3.Light.Dialog.Alert">
+        <item name="colorSurface">@color/dialog_bg</item>
+        <item name="colorOnSurface">@color/dialog_text_primary</item>
+        <item name="android:windowBackground">@color/dialog_bg</item>
+        <item name="android:textColorPrimary">@color/dialog_text_primary</item>
+        <item name="android:textColorSecondary">@color/dialog_text_secondary</item>
+    </style>
+
+    <!-- Popup menus (e.g., toolbar overflow) -->
+    <style name="ThemeOverlay.SensaCare.PopupMenu" parent="ThemeOverlay.Material3.Light">
+        <item name="android:colorBackground">@color/dialog_bg</item>
+        <item name="android:textColorPrimary">@color/dialog_text_primary</item>
+        <item name="android:textColorSecondary">@color/dialog_text_secondary</item>
+        <!-- Lighter pressed state -->
+        <item name="android:colorControlHighlight">@color/menu_item_highlight</item>
+    </style>
+</resources>

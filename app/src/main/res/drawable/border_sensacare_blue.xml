@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    
+    <!-- Transparent fill so the card background color shows through -->
+    <solid android:color="@android:color/transparent" />
+    
+    <!-- Solid Sensacare blue border -->
+    <stroke
+        android:width="2dp"
+        android:color="@color/sensacare_blue" />
+    
+    <!-- Rounded corners to match card corner radius -->
+    <corners android:radius="12dp" />
+    
+</shape>

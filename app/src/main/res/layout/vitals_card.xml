@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="140dp"
+    android:layout_columnWeight="1"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    android:foreground="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp">
+
+        <!-- Top-left icon -->
+        <ImageView
+            android:id="@+id/ivVitalsIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentStart="true"
+            tools:src="@drawable/ic_heart"
+            tools:tint="@color/success" />
+
+        <!-- Vitals name -->
+        <TextView
+            android:id="@+id/tvVitalsName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_toEndOf="@id/ivVitalsIcon"
+            android:layout_marginStart="8dp"
+            android:textSize="14sp"
+            android:textColor="@color/white"
+            tools:text="Heart Rate" />
+
+        <!-- Center value with unit -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tvVitalsValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="28sp"
+                android:textColor="@color/white"
+                tools:text="80" />
+
+            <TextView
+                android:id="@+id/tvVitalsUnit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="@color/white"
+                tools:text="/BPM" />
+        </LinearLayout>
+
+        <!-- Bottom status -->
+        <TextView
+            android:id="@+id/tvVitalsStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:textSize="14sp"
+            tools:text="Normal"
+            tools:textColor="@color/success" />
+    </RelativeLayout>
+</androidx.cardview.widget.CardView>
